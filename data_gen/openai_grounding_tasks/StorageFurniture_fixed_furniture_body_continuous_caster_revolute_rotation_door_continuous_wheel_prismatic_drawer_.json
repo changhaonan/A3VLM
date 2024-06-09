@@ -1,0 +1,57 @@
+{
+"StorageFurniture": {
+    "rotation_door": {
+        "rotate_door": {
+            "description": "Rotate the door using its hinge.",
+            "actions": ["rotate['rotation_door']"]
+        }
+    },
+    "opened_drawer": {
+        "close_drawer": {
+            "description": "Close the open drawer by sliding it inward.",
+            "actions": ["slide_in['opened_drawer']"]
+        },
+        "keep_drawer_open": {
+            "description": "Leave the drawer as it is. It is already open.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "closed_drawer": {
+        "open_drawer": {
+            "description": "Open the closed drawer by sliding it out.",
+            "actions": ["slide_out['closed_drawer']"]
+        },
+        "keep_drawer_closed": {
+            "description": "Leave the drawer as it is. It is already closed.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "caster": {
+        "rotate_caster": {
+            "description": "Rotate the caster for moving the furniture.",
+            "actions": ["rotate['caster']"]
+        }
+    },
+    "wheel": {
+        "rotate_wheel": {
+            "description": "Rotate the wheel for moving the furniture.",
+            "actions": ["rotate['wheel']"]
+        }
+    },
+    "general": {
+        "clean_furniture_body":{
+            "description": "Clean the furniture body to remove dust or any other particles.",
+            "actions": ["wipe['furniture_body']"]
+        },
+
+        "clean_drawer":{
+            "description": "Clean the open and closed drawers.",
+            "actions": ["wipe['opened_drawer']", "wipe['closed_drawer']"]
+        },
+        "clean_whole_furniture":{
+            "description": "Clean the entire storage furniture including the body, door, caster, wheel and the drawers.",
+            "actions": ["wipe['furniture_body']", "wipe['opened_drawer']", "wipe['closed_drawer']", "wipe['rotation_door']", "wipe['caster']", "wipe['wheel']"]
+        }
+    }
+}
+}

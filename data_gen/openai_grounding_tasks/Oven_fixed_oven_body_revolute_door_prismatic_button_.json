@@ -1,0 +1,40 @@
+{
+"Oven": {
+    "opened_door": {
+        "close_oven_door": {
+            "description": "Close the oven door by swinging it to the closed position.",
+            "actions": ["flap_close['door']"]
+          }
+    },
+    "closed_door": {
+        "open_oven_door": {
+            "description": "Open the oven door by swinging it to the opened position.",
+            "actions": ["flap_open['door']"]
+        },
+        "closed_oven_door": {
+            "description": "The oven door is already closed.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the oven button.",
+            "actions": ["press['button']"]
+        },
+        "clean_button": {
+            "description": "Clean the oven button to ensure it works properly.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "oven_body": {
+        "clean_oven" : {
+            "description": "Clean the oven body to remove dirt, grease, and debris.",
+            "actions": ["wipe['oven_body']"]
+        },
+        "clean_whole_oven" : {
+            "description": "Clean the entire oven, including the body, door, and button.",
+            "actions": ["wipe['oven_body']", "wipe['door']", "wipe['button']"]
+        }
+    }
+}
+}

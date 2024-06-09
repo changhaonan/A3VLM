@@ -1,0 +1,52 @@
+{
+    "Toilet": {
+        "lever": {
+            "apply_lever": {
+                "description": "Apply the lever to flush the toilet.",
+                "actions": [
+                    "rotate['lever']"
+                ]
+            }
+        },
+        "pump_lid": {
+            "lift_pump_lid": {
+                "description": "Lift the pump lid to access the pump.",
+                "actions": [
+                    "slide_out['pump_lid']"
+                ]
+            },
+            "replace_pump_lid": {
+                "description": "Replace the pump lid after accessing the pump.",
+                "actions": [
+                    "slide_in['pump_lid']"
+                ]
+            }
+        },
+        "toilet_body": {
+            "clean_toilet_body": {
+                "description": "Clean the toilet body to maintain hygiene.",
+                "actions": [
+                    "wipe['toilet_body']"
+                ]
+            }
+        },
+        "general": {
+            "clean_whole_toilet": {
+                "description": "Clean the entire toilet, including lever, pump lid, and toilet body.",
+                "actions": [
+                    "wipe['lever']",
+                    "wipe['pump_lid']",
+                    "wipe['toilet_body']"
+                ]
+            },
+            "use_toilet": {
+                "description": "Use the toilet by manipulating lever and pump lid.",
+                "actions": [
+                    "slide_out['pump_lid']",
+                    "rotate['lever']",
+                    "slide_in['pump_lid']"
+                ]
+            }
+        }
+    }
+}

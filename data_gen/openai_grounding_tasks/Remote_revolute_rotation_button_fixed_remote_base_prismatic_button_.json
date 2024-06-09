@@ -1,0 +1,40 @@
+{
+"Remote": {
+    "button": {
+        "press_button": {
+            "description": "Press the button to activate it.",
+            "actions": ["press['button']"]
+        },
+        "clean_button":{
+            "description": "Clean the button to make sure it functions fully.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "rotation_button": {
+        "rotate_button": {
+            "description": "Rotate the button to adjust its settings.",
+            "actions": ["rotate['rotation_button']"]
+        },
+        "clean_rotation_button":{
+            "description": "Clean the rotation button to ensure it functions correctly.",
+            "actions": ["wipe['rotation_button']"]
+        }
+    },
+    "remote_base": {
+       "clean_remote_base" : {
+            "description": "Clean the remote base to remove dust or any other particles.",
+            "actions": ["wipe['remote_base']"]
+        }
+    },
+    "general": {
+        "press_all_buttons":{
+            "description": "Press all the buttons on the remote.",
+            "actions": ["press['button']", "rotate['rotation_button']"]
+        },
+        "clean_whole_remote":{
+            "description": "Clean all parts of the remote including the buttons and base.",
+            "actions": ["wipe['button']", "wipe['rotation_button']", "wipe['remote_base']"]
+        }
+    }
+}
+}

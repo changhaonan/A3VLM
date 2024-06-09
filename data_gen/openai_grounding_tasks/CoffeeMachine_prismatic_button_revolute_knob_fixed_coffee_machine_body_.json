@@ -1,0 +1,43 @@
+{
+"CoffeeMachine": {
+    "button": {
+        "press_button": {
+            "description": "Press the button to operate the machine.",
+            "actions": ["press['button']"]
+        },
+
+        "clean_button":{
+            "description": "Clean the button to ensure it operates smoothly.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the knob to set coffee strength.",
+            "actions": ["rotate['knob']"]
+        },
+
+        "clean_knob":{
+            "description": "Clean the knob to ensure it operates smoothly.",
+            "actions": ["wipe['knob']"]
+        }
+    },
+    "coffee_machine_body": {
+        "clean_coffee_machine":{
+            "description": "Clean the whole coffee machine to ensure quality.",
+            "actions": ["wipe['coffee_machine_body']"]
+        }
+    },
+    "general": {
+        "use_coffee_machine":{
+            "description": "Operate the coffee machine to make coffee.",
+            "actions": ["press['button']", "rotate['knob']", "statusComplete"]
+        },
+
+        "maintain_coffee_machine":{
+            "description": "Perform maintenance on the coffee machine.",
+            "actions": ["wipe['coffee_machine_body']", "wipe['button']", "wipe['knob']"]
+        }
+    }
+}
+}

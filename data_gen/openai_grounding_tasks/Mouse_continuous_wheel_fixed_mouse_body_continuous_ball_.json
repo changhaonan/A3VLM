@@ -1,0 +1,36 @@
+{
+"Mouse": {
+    "wheel": {
+        "rotate_wheel": {
+            "description": "Rotate the mouse's wheel.",
+            "actions": ["rotate['wheel']"]
+        }
+    },
+    "ball": {
+        "rotate_ball": {
+            "description": "Rotate the mouse's ball.",
+            "actions": [ "rotate['ball']"] 
+        }
+    },
+    "mouse_body": {
+        "wipe_mouse_body": {
+            "description": "Swipe to clean the mouse body.",
+            "actions": [ "wipe['mouse_body']"] 
+        }
+    },
+    "general": {
+        "clean_wheel":{
+            "description": "Clean the mouse wheel to ensure it performs optimally.",
+            "actions": ["wipe['wheel']"]
+        },
+        "clean_ball":{
+            "description": "Clean the mouse ball to ensure it performs optimally.",
+            "actions": ["wipe['ball']"]
+        },
+        "clean_mouse":{
+            "description": "Clean the entire mouse including the mouse body, wheel, and ball.",
+            "actions": ["wipe['mouse_body']", "wipe['wheel']", "wipe['ball']"]
+        }
+    }
+}
+}

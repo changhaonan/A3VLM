@@ -1,0 +1,26 @@
+{
+"Lighter": {
+    "button": {
+        "press_button": {
+            "description": "Press the button to light the lighter.",
+            "actions": ["press['button']"]
+        },
+        "clean_button":{
+            "description": "Clean the button to ensure proper functioning.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "lighter_body": {
+        "clean_body":{
+            "description": "Clean the body of the lighter to remove dust or any other particles.",
+            "actions": ["wipe['lighter_body']"]
+        }
+    },
+    "general": {
+        "clean_whole_lighter":{
+            "description": "Clean the entire lighter including the button and body.",
+            "actions": ["wipe['button']", "wipe['lighter_body']"]
+        }
+    }
+}
+}

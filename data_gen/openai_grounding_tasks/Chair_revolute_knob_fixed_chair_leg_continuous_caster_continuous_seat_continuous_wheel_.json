@@ -1,0 +1,44 @@
+{
+"Chair": {
+    "knob": {
+        "clean_knob": {
+            "description": "Clean the knob.",
+            "actions": ["wipe['knob']"]
+        },
+        "rotate_knob": {
+            "description": "Rotate the knob to adjust chair settings.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "wheel": {
+        "clean_wheel": {
+            "description": "Clean the wheel.",
+            "actions": ["wipe['wheel']"]
+        }
+    },
+    "seat": {
+        "clean_seat": {
+            "description": "Clean the seat.",
+            "actions": ["wipe['seat']"]
+        }
+    },
+    "chair_leg": {
+        "clean_chair_leg": {
+            "description": "Clean the chair leg.",
+            "actions": ["wipe['chair_leg']"]
+        }
+    },
+    "caster": {
+        "clean_caster": {
+            "description": "Clean the caster.",
+            "actions": ["wipe['caster']"]
+        }
+    },
+    "general": {
+        "clean_chair":{
+            "description": "Clean the chair thoroughly, including knob, wheels, seat, chair leg, and caster.",
+            "actions": ["wipe['knob']", "wipe['wheel']", "wipe['seat']", "wipe['chair_leg']", "wipe['caster']"]
+        }
+    }
+}
+}

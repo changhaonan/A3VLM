@@ -1,0 +1,46 @@
+{
+"Toilet": {
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the knob to flush the toilet.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "opened_lid": {
+        "close_lid": {
+            "description": "Close the toilet lid by moving it to the closed position.",
+            "actions": ["flap_close['lid']"]
+        },
+        "clean_opened_lid": {
+            "description": "Clean the opened toilet lid to maintain hygiene.",
+            "actions": ["wipe['lid']"]
+        }
+    },
+    "closed_lid": {
+        "open_lid": {
+            "description": "Open the toilet lid by moving it to the opened position.",
+            "actions": ["flap_open['lid']"]
+        },
+        "clean_closed_lid": {
+            "description": "Clean the closed toilet lid to maintain hygiene.",
+            "actions": ["wipe['lid']"]
+        }
+    },
+    "general": {
+        "clean_toilet_body":{
+            "description": "Clean the toilet body to maintain hygiene.",
+            "actions": ["wipe['toilet_body']"]
+        },
+
+        "clean_knob":{
+            "description": "Clean the knob to ensure proper functioning.",
+            "actions": ["wipe['knob']"]
+        },
+
+        "clean_whole_toilet":{
+            "description": "Clean the entire toilet including the toilet body, lid, and knob.",
+            "actions": ["wipe['toilet_body']", "wipe['lid']", "wipe['knob']"]
+        }
+    }
+}
+}

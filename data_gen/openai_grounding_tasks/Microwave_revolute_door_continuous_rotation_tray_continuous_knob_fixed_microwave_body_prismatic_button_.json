@@ -1,0 +1,56 @@
+{
+"Microwave": {
+    "opened_door": {
+        "close_door": {
+            "description": "Close the door of the microwave by swinging it to a closed position.",
+            "actions": ["flap_close['opened_door']"]
+        }
+    },
+    "closed_door": {
+        "open_door": {
+            "description": "Open the door of the microwave by swinging it to an open position.",
+            "actions": ["flap_open['closed_door']"] 
+        },
+        "close_door": {
+            "description": "The door of the microwave is already closed. No action is necessary.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the button on the microwave.",
+            "actions": ["press['button']"]
+        }
+    },
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the knob on the microwave.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "rotation_tray": {
+        "rotate_tray": {
+            "description": "Rotate the tray inside the microwave.",
+            "actions": ["rotate['rotation_tray']"]
+        }
+    },
+    "general": {
+        "clean_microwave_body":{
+            "description": "Clean the body of the microwave to remove dust, stains, or any other particles.",
+            "actions": ["wipe['microwave_body']"]
+        },
+        "clean_microwave_door":{
+            "description": "Clean the door of the microwave to ensure clear visibility inside the microwave.",
+            "actions": ["wipe['closed_door']", "wipe['opened_door']"]
+        },
+        "clean_microwave_tray":{
+            "description": "Clean the rotation tray of the microwave to ensure it is hygienic for placing food on it.",
+            "actions": ["wipe['rotation_tray']"]
+        },
+        "clean_whole_microwave":{
+            "description": "Clean the entire microwave including its body, door, button, knob, and rotation tray.",
+            "actions": ["wipe['microwave_body']", "wipe['closed_door']", "wipe['opened_door']", "wipe['button']", "wipe['knob']", "wipe['rotation_tray']"]
+        }
+    }
+}
+}

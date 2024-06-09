@@ -4,11 +4,6 @@ import json
 import random
 import numpy as np
 
-render_result_path = "/mnt/petrelfs/huangsiyuan/data/partnet_pyrender_960_v6_fix_angle"
-texture_prompts_path = "/mnt/petrelfs/huangsiyuan/data/texture_prompts"
-
-import numpy as np
-
 palette = np.asarray(
     [
         [0, 0, 0],
@@ -288,5 +283,12 @@ def construct_data_index_classname(render_result_path):
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--render_result_path", type=str, required=True)
+    parser.add_argument("--texture_prompts_path", type=str, required=True)
+    args = parser.parse_args()
+    render_result_path = args.render_result_path
+    texture_prompts_path = args.texture_prompts_path
     construct_dataset_csv(render_result_path=render_result_path, texture_prompts_path=texture_prompts_path)
-    # construct_data_index_classname(render_result_path=render_result_path)

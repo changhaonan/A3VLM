@@ -1,0 +1,32 @@
+{
+"Faucet": {
+    "switch": {
+        "rotate_switch": {
+            "description": "Rotate the switch to start or stop the flow of water.",
+            "actions": ["rotate['switch']"]
+        },
+        "clean_switch": {
+            "description": "Clean the switch properly to ensure smooth rotation.",
+            "actions": ["wipe['switch']"]
+        }
+    },
+    "faucet_base": {
+        "clean_faucet_base":{
+            "description": "Clean the base of the faucet to maintain hygiene.",
+            "actions": ["wipe['faucet_base']"]
+        }
+    },
+    "spout": {
+        "clean_spout":{
+            "description": "Clean the spout properly to avoid water contamination.",
+            "actions": ["wipe['spout']"]
+        }
+    },
+    "general": {
+        "clean_whole_faucet":{
+            "description": "This operation involves cleaning the entire faucet including the switch, base and spout.",
+            "actions": ["wipe['switch']", "wipe['faucet_base']", "wipe['spout']"]
+        }
+    }
+}
+}

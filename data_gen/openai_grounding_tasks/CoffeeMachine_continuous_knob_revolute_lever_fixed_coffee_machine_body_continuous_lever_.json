@@ -1,0 +1,26 @@
+{
+"CoffeeMachine": {
+    "lever": {
+        "operate_lever_continuous": {
+            "description": "Move the continuous joint type lever.",
+            "actions": ["rotate['lever']"]
+        },
+        "operate_lever_revolute": {
+            "description": "Move the revolute joint type lever.",
+            "actions": ["rotate['lever']"]
+        }
+    },
+    "knob": {
+        "operate_knob": {
+            "description": "Turn the knob to control coffee output.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "coffee_machine_body": {
+       "clean_coffee_machine_body": {
+            "description": "Clean the coffee machine body to remove any coffee stains or dust.",
+            "actions": ["wipe['coffee_machine_body']"]
+        }
+    }
+}
+}

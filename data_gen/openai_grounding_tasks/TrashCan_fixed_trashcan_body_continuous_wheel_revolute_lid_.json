@@ -1,0 +1,178 @@
+{
+    "TrashCan": {
+        "opened_lid": {
+            "close_lid": {
+                "description": "Close the trash can lid completely.",
+                "actions": [
+                    "flap_close['lid']"
+                ]
+            },
+            "rotate_lid": {
+                "description": "Rotate the trash can lid in its open state.",
+                "actions": [
+                    "rotate['lid']"
+                ]
+            },
+            "clean_inner_lid": {
+                "description": "Clean the inner side of the lid when it is open.",
+                "actions": [
+                    "wipe['lid']"
+                ]
+            },
+            "adjust_lid": {
+                "description": "Create a slight movement in the opened lid.",
+                "actions": [
+                    "rotate['lid']"
+                ]
+            },
+            "wipe_inner_lid": {
+                "description": "Thoroughly wipe the inner parts of an open lid.",
+                "actions": [
+                    "wipe['lid']"
+                ]
+            },
+            "clean_lid": {
+                "description": "Clean the trash can lid from the inner side.",
+                "actions": [
+                    "wipe['lid']"
+                ]
+            }
+        },
+        "closed_lid": {
+            "open_lid": {
+                "description": "Open the closed lid of the trash can.",
+                "actions": [
+                    "flap_open['lid']"
+                ]
+            },
+            "lid_is_securely_closed": {
+                "description": "Ensure the trash can lid is securely closed.",
+                "actions": [
+                    "StatusComplete"
+                ]
+            },
+            "clean_outer_lid": {
+                "description": "Clean the outer side of the lid when it's closed.",
+                "actions": [
+                    "wipe['lid']"
+                ]
+            },
+            "secure_lid": {
+                "description": "Ensure the lid is securely closed.",
+                "actions": [
+                    "StatusComplete"
+                ]
+            },
+            "close_lid": {
+                "description": "Keep the trash can lid closed.",
+                "actions": [
+                    "StatusComplete"
+                ]
+            },
+            "clean_lid": {
+                "description": "Clean the trash can lid from the outer side.",
+                "actions": [
+                    "wipe['lid']"
+                ]
+            }
+        },
+        "trashcan_body": {
+            "wipe_trashcan": {
+                "description": "Wipe the body of the trash can to ensure cleanliness.",
+                "actions": [
+                    "wipe['trashcan_body']"
+                ]
+            },
+            "slide_trashcan": {
+                "description": "Slide the trash can slightly to reposition it.",
+                "actions": [
+                    "slide_in['trashcan_body']"
+                ]
+            },
+            "wipe_body": {
+                "description": "Wipe the body of the trashcan to ensure cleanliness.",
+                "actions": [
+                    "wipe['trashcan_body']"
+                ]
+            },
+            "clean_body": {
+                "description": "Clean the trash can body.",
+                "actions": [
+                    "wipe['trashcan_body']"
+                ]
+            }
+        },
+        "wheel": {
+            "rotate_wheel": {
+                "description": "Rotate the wheel to ensure it is well functioning.",
+                "actions": [
+                    "rotate['wheel']"
+                ]
+            },
+            "clean_wheel": {
+                "description": "Clean the wheel to maintain its functionality and appearance.",
+                "actions": [
+                    "wipe['wheel']"
+                ]
+            },
+            "press_wheel": {
+                "description": "Press the wheel to check its state.",
+                "actions": [
+                    "press['wheel']"
+                ]
+            }
+        },
+        "general": {
+            "clean_entire_trashcan": {
+                "description": "Clean the entire trash can including the body, lid and wheel.",
+                "actions": [
+                    "wipe['trashcan_body']",
+                    "wipe['lid']",
+                    "wipe['wheel']"
+                ]
+            },
+            "slide_and_rotate_trashcan": {
+                "description": "Adjust the trash can's position by sliding the body and rotating the wheels.",
+                "actions": [
+                    "slide_in['trashcan_body']",
+                    "rotate['wheel']"
+                ]
+            },
+            "clean_trashcan": {
+                "description": "Clean the entire trashcan, including the lid, wheel, and body, to maintain hygiene.",
+                "actions": [
+                    "wipe['lid']",
+                    "wipe['trashcan_body']",
+                    "wipe['wheel']"
+                ]
+            },
+            "adjust_position": {
+                "description": "Change the trashcan's position by moving the body and rotating the wheels.",
+                "actions": [
+                    "slide_in['trashcan_body']",
+                    "rotate['wheel']"
+                ]
+            },
+            "clean_trashcan_body": {
+                "description": "Clean the TrashCan body to remove dust or any other particles.",
+                "actions": [
+                    "wipe['trashcan_body']"
+                ]
+            },
+            "clean_wheel": {
+                "description": "Clean the wheel to ensure it moves smoothly.",
+                "actions": [
+                    "wipe['wheel']"
+                ]
+            },
+            "clean_whole_trashcan": {
+                "description": "Clean the entire TrashCan including the body, lid, and wheel.",
+                "actions": [
+                    "wipe['trashcan_body']",
+                    "wipe['lid']",
+                    "wipe['wheel']"
+                ]
+            }
+        }
+    }
+}

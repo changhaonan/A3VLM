@@ -1,0 +1,44 @@
+{
+"Microwave": {
+    "button": {
+        "push_button": {
+            "description": "Push the button to start the microwave.",
+            "actions": ["press['button']"]
+        }
+    },
+    "opened_door": {
+        "shut_door": {
+            "description": "Shut the microwave door by swinging it to the closed position.",
+            "actions": ["flap_close['door']"]
+        },
+        "rotate_tray": {
+            "description": "Rotate the microwave's tray.",
+            "actions": ["rotate['rotation_tray']"]
+        }
+    },
+    "closed_door": {
+        "open_door": {
+            "description": "Open the microwave door by swinging it outwards.",
+            "actions": ["flap_open['door']"] 
+        },
+        "rotate_tray": {
+            "description": "Rotate the microwave's tray.",
+            "actions": ["rotate['rotation_tray']"]
+        }
+    },
+    "general": {
+        "clean_microwave_body": {
+            "description": "Clean the microwave body to remove any spills or stains.",
+            "actions": ["wipe['microwave_body']"]
+        },
+        "clean_rotation_tray": {
+            "description": "Clean the microwave's rotation tray to remove food particles.",
+            "actions": ["wipe['rotation_tray']"]
+        },
+        "clean_whole_microwave":{
+            "description": "Clean the entire microwave including the body, door, and button.",
+            "actions": ["wipe['microwave_body']", "wipe['button']", "wipe['rotation_tray']", "wipe['door']"]
+        }
+    }
+}
+}

@@ -1,0 +1,36 @@
+{
+"Oven": {
+    "button": {
+        "press_button": {
+            "description": "Press the button to control oven functionality.",
+            "actions": ["press['button']"]
+        }
+    },
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the knob to adjust temperature or cooking mode.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "oven_body": {
+        "clean_oven_body":{
+            "description": "Clean the oven body to remove grease or food particles.",
+            "actions": ["wipe['oven_body']"]
+        }
+    },
+    "general": {
+        "clean_button":{
+            "description": "Clean the button to ensure correct functioning of oven settings.",
+            "actions": ["wipe['button']"]
+        },
+        "clean_knob":{
+            "description": "Clean the knob to get rid of any dust or grime.",
+            "actions": ["wipe['knob']"]
+        },
+        "clean_whole_oven":{
+            "description": "Clean the entire oven including the oven body, button, and knob.",
+            "actions": ["wipe['oven_body']", "wipe['button']", "wipe['knob']"]
+        }
+    }
+}
+}

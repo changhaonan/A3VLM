@@ -1,0 +1,36 @@
+{
+  "Printer": {
+      "button": {
+          "push_button": {
+              "description": "Press the button.",
+              "actions": ["press['button']"]
+          },
+          "wipe_button": {
+              "description": "Clean the button to ensure proper functioning.",
+              "actions": ["wipe['button']"]
+          }
+      },
+      "toggle_button": {
+          "rotate_toggle_button": {
+              "description": "Rotate the toggle button if needed.",
+              "actions": ["rotate['toggle_button']"]
+          },
+          "clean_toggle_button": {
+              "description": "Clean the toggle button for better touch response.",
+              "actions": ["wipe['toggle_button']"]
+          }
+      },
+      "printer_body": {
+          "clean_printer_body": {
+              "description": "Clean the printer body to remove dust and to maintain cleanliness.",
+              "actions": ["wipe['printer_body']"]
+          }
+      },
+      "general": {
+          "clean_whole_printer": {
+              "description": "Clean the entire printer including the printer body, all buttons and toggle_button.",
+              "actions": ["wipe['printer_body']", "wipe['button']", "wipe['toggle_button']"]
+          }
+      }
+  }
+}

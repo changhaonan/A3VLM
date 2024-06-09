@@ -1,0 +1,52 @@
+{
+"tasks":{
+  "Microwave": {
+    "opened_door": {
+        "close_the_door": {
+            "description": "Close the microwave door.",
+            "actions": ["flap_close['opened_door']"]
+        },
+        "clean_the_door": {
+            "description": "Clean the opened microwave door.",
+            "actions": ["wipe['opened_door']"]
+        }
+    },
+    "closed_door": {
+        "open_the_door": {
+            "description": "Open the microwave door.",
+            "actions": ["flap_open['closed_door']"]
+        },
+        "clean_the_door":{
+            "description": "Clean the closed microwave door",
+            "actions": ["wipe['closed_door']"]
+        }
+    },
+    "rotation_tray": {
+        "rotate_the_tray": {
+            "description": "Rotate the tray continuously inside the microwave",
+            "actions": ["rotate['rotation_tray']"]
+        },         
+        "clean_rotation_tray": {
+           "description": "Clean the rotation tray to remove any food remnants.",
+           "actions": ["wipe['rotation_tray']"]
+        }
+    },
+    "microwave_body": {
+        "clean_the_body": {
+            "description": "Clean the microwave body to keep it shiny and clean.",
+            "actions": ["wipe['microwave_body']"]
+        }
+    },
+    "multiple_components": {
+        "clean_microwave": {
+            "description": "Clean the entire microwave including the body, door, and rotation tray.",
+            "actions": ["wipe['microwave_body']", "wipe['closed_door']", "wipe['rotation_tray']"]
+        },
+        "clean_and_rotate_tray": {
+            "description": "Clean the rotation tray and rotate it.",
+            "actions": ["wipe['rotation_tray']", "rotate['rotation_tray']"]
+        }
+    }
+  }
+}
+}

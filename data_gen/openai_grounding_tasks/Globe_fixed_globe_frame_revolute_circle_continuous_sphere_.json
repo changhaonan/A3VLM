@@ -1,0 +1,41 @@
+{
+"Globe": {
+    "sphere": {
+        "rotate_sphere": {
+            "description": "Rotate the sphere part of the globe.",
+            "actions": ["rotate['sphere']"]
+        },
+        "clean_sphere":{
+            "description": "Clean the sphere part of the globe to ensure proper visibility of geographical locations.",
+            "actions": ["wipe['sphere']"]
+        }
+    },
+    "circle": {
+        "rotate_circle": {
+            "description": "Rotate the circle part of the globe lightly.",
+            "actions": ["rotate['circle']"]
+        },
+        "clean_circle":{
+            "description": "Clean the circle part to remove any dust or particles.",
+            "actions": ["wipe['circle']"]
+        }
+    },
+    "globe_frame": {
+        "clean_globe_frame": {
+            "description": "Clean the globe frame to maintain its shine.",
+            "actions": ["wipe['globe_frame']"]
+        }
+    },
+    "general": {
+        "clean_whole_globe":{
+            "description": "Clean the entire globe including the frame, sphere, and circle.",
+            "actions": ["wipe['globe_frame']", "wipe['sphere']", "wipe['circle']"]
+        },
+
+        "interact_with_globe": {
+            "description": "Interact with the globe, including rotating the sphere and the circle.",
+            "actions": ["rotate['sphere']", "rotate['circle']"]
+        }
+    }
+}
+}

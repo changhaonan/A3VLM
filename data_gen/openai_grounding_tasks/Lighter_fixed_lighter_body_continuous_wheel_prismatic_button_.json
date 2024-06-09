@@ -1,0 +1,40 @@
+{
+"Lighter": {
+    "wheel": {
+        "rotate_wheel": {
+            "description": "Rotate the wheel of the lighter to generate sparks.",
+            "actions": ["rotate['wheel']"]
+        }, 
+        "clean_wheel": {
+            "description": "Clean the wheel to remove dirt to ensure continuous sparks.",
+            "actions": ["wipe['wheel']"]
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the button to release the gas.", 
+            "actions": ["press['button']"]
+        },
+        "clean_button": {
+            "description": "Clean the button for smooth functioning.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "lighter_body": {
+        "clean_body":{
+            "description": "Clean the lighter body to maintain hygiene.",
+            "actions": ["wipe['lighter_body']"]
+        }
+    },
+    "general": {
+        "ignite_lighter":{
+            "description": "Ignite the lighter by pressing the button and rotating the wheel.",
+            "actions": ["press['button']", "rotate['wheel']"]
+        },
+        "clean_whole_lighter":{
+            "description": "Clean the entire lighter including the wheel, button, and lighter body.",
+            "actions": ["wipe['wheel']", "wipe['button']", "wipe['lighter_body']"]
+        }
+    }
+}
+}

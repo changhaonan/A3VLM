@@ -1,0 +1,31 @@
+{
+"Door": {
+    "door_frame": {
+        "press_door_frame": {
+            "description": "Press the door frame.",
+            "actions": ["press['door_frame']"]
+        }
+    },
+    "translation_door": {
+        "move_translation_door": {
+            "description": "Move the translation door along its track.",
+            "actions": [ "slide_in['translation_door']", "slide_out['translation_door']"]
+        }
+    },
+    "general": {
+        "clean_door_frame":{
+            "description": "Clean the door frame to remove dust or any other particles.",
+            "actions": ["wipe['door_frame']"]
+        },
+
+        "clean_translation_door":{
+            "description": "Clean the translation door to ensure it can move smoothly.",
+            "actions": ["wipe['translation_door']"]
+        },
+        "clean_whole_door":{
+            "description": "Clean the entire door including the door frame and translation door.",
+            "actions": ["wipe['door_frame']", "wipe['translation_door']"]
+        }
+    }
+}
+}

@@ -1,0 +1,30 @@
+{
+"Switch": {
+    "toggle_button": {
+        "rotate_button": {
+            "description": "Rotate the toggle button to change the switch's state.",
+            "actions": ["rotate['toggle_button']"]
+        },
+        "press_button": {
+            "description": "Press the toggle button to change the switch's state.",
+            "actions": ["press['toggle_button']"]
+        },
+        "clean_button": {
+            "description": "Wipe the toggle button to ensure it is clean.",
+            "actions": ["wipe['toggle_button']"]
+        }
+    },
+    "switch_frame": {
+        "clean_frame": {
+            "description": "Wipe the switch frame to ensure it is clean.",
+            "actions": ["wipe['switch_frame']"]
+        }
+    },
+    "general": {
+        "clean_switch": {
+            "description": "Clean the entire switch including the toggle button and switch frame.",
+            "actions": ["wipe['toggle_button']", "wipe['switch_frame']"]
+        }
+    }
+}
+}

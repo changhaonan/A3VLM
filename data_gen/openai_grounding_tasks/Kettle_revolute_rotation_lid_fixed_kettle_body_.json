@@ -1,0 +1,26 @@
+{
+"Kettle": {
+    "rotation_lid": {
+        "rotate_lid": {
+            "description": "Rotate the lid of the kettle.",
+            "actions": ["rotate['rotation_lid']"]
+        }
+    },
+    "kettle_body": {
+        "clean_kettle_body": {
+            "description": "Clean the kettle body to remove dust, dirt or any other particles.",
+            "actions": ["wipe['kettle_body']"]
+        }
+    },
+    "general": {
+        "clean_rotation_lid": {
+            "description": "Clean the rotation lid to ensure it functions properly and remove any dirt.",
+            "actions": ["wipe['rotation_lid']"]
+        },
+        "clean_whole_kettle": {
+            "description": "Clean the entire kettle, including the kettle body and rotation lid.",
+            "actions": ["wipe['rotation_lid']", "wipe['kettle_body']"]
+        }
+    }
+}
+}

@@ -1,0 +1,60 @@
+{
+"Toilet": {
+    "button": {
+        "press_button": {
+            "description": "Press the toilet button.",
+            "actions": ["press['button']"]
+        },
+        "clean_button":{
+            "description": "Clean the button to ensure it works properly.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "opened_lid": {
+        "close_lid": {
+            "description": "Close the toilet lid by moving it to the closed position.",
+            "actions": ["flap_close['lid']"]
+        }
+    },
+    "closed_lid": {
+        "open_lid": {
+            "description": "Open the toilet lid by moving it to the opened position.",
+            "actions": ["flap_open['lid']"]
+        },
+        "close_lid": {
+            "description": "The lid is already closed.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "opened_seat": {
+        "close_seat": {
+            "description": "Close the toilet seat by swinging it to the closed position.",
+            "actions": ["flap_close['seat']"]
+        }
+    },
+    "closed_seat": {
+        "open_seat": {
+            "description": "Open the toilet seat by swinging it to the opened position.",
+            "actions": ["flap_open['seat']"]
+        },
+        "close_seat": {
+            "description": "The seat is already closed.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "general": {
+        "clean_seat":{
+            "description": "Clean the toilet seat to maintain hygiene.",
+            "actions": ["wipe['seat']"]
+        },
+        "clean_lid":{
+            "description": "Clean the toilet lid to keep it neat and clean.",
+            "actions": ["wipe['lid']"]
+        },
+        "clean_whole_toilet":{
+            "description": "Clean the entire toilet including the seat, lid, and button.",
+            "actions": ["wipe['seat']", "wipe['lid']", "wipe['button']"]
+        }
+    }
+}
+}

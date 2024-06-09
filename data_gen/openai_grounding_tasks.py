@@ -1,3 +1,6 @@
+"""Generate grounding tasks for the given dataset using OpenAI API.
+"""
+
 import os
 import json
 from openai import OpenAI
@@ -9,16 +12,6 @@ import time
 api_key = os.getenv("OPENAI_API_KEY")
 assert api_key is not None, "Please set OPENAI_API_KEY environment variable first."
 client = OpenAI(api_key=api_key)
-
-prompt_path = "prompts/grounding_task_generation.txt"
-dataset_root = "/mnt/petrelfs/huangsiyuan/data/partnet_pyrender_960_v3"
-
-with open(prompt_path, "r") as f:
-    prompt = f.read()
-save_path = "openai_grounding_tasks"
-os.makedirs(save_path, exist_ok=True)
-save_failure_path = os.path.join(save_path, "failed_responses")
-os.makedirs(save_failure_path, exist_ok=True)
 
 
 def load_link_semantic(file_path, joint_types, open_close_link=None):
@@ -127,7 +120,7 @@ def get_openai_response(prompt, previous_description, class_name, link_info):
     return completion.choices[0].message.content
 
 
-def get_response_and_save(dataset_idx=101564, max_tasks=20):
+def get_response_and_save(prompt, dataset_idx=101564, max_tasks=20):
     dataset_path = os.path.join(dataset_root, str(dataset_idx))
     semantic_file = os.path.join(dataset_path, "semantics.txt")
     mata_json = os.path.join(dataset_path, "meta.json")
@@ -159,6 +152,23 @@ def get_response_and_save(dataset_idx=101564, max_tasks=20):
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--prompt_path", type=str, default="prompts/grounding_task_generation.txt")
+    parser.add_argument("--dataset_root", type=str, required=True)
+    args = parser.parse_args()
+
+    prompt_path = args.prompt_path
+    dataset_root = args.dataset_root
+
+    with open(prompt_path, "r") as f:
+        prompt = f.read()
+    save_path = "openai_grounding_tasks"
+    os.makedirs(save_path, exist_ok=True)
+    save_failure_path = os.path.join(save_path, "failed_responses")
+    os.makedirs(save_failure_path, exist_ok=True)
+
     all_sub_folders = os.listdir(dataset_root)
     all_sub_folders_indexs = [int(folder) for folder in all_sub_folders]
     all_sub_folders_indexs.sort()
@@ -174,7 +184,7 @@ if __name__ == "__main__":
     for index in tqdm(all_sub_folders_indexs):
         if index in processed_dataset_idx:
             continue
-        status = get_response_and_save(index, max_tasks=30)
+        status = get_response_and_save(prompt, index, max_tasks=30)
         if status == "Success":
             with open(processed_dataset_text_file, "a") as f:
                 f.write(f"{index}\n")

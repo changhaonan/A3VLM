@@ -1,0 +1,33 @@
+{
+"Fan": {
+    "rotor": {
+        "rotate_rotor": {
+            "description": "Rotate the fan's rotor.",
+            "actions": ["rotate['rotor']"]
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the button to control the fan.",
+            "actions": ["press['button']"]
+        }
+    },
+    "fan_frame": {
+        "clean_frame": {
+            "description": "Wipe the fan frame to remove dust or any other particles.",
+            "actions": ["wipe['fan_frame']"]
+        }
+    },
+    "general": {
+        "clean_rotor":{
+            "description": "Clean the rotor to ensure smooth running.",
+            "actions": ["wipe['rotor']"]
+        },
+
+        "clean_entire_fan":{
+            "description": "Clean the entire fan including the rotor, frame, and button.",
+            "actions": ["wipe['rotor']", "wipe['fan_frame']", "wipe['button']"]
+        }
+    }
+}
+}

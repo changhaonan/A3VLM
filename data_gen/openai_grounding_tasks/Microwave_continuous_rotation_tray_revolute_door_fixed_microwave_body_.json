@@ -1,0 +1,48 @@
+{
+"Microwave": {
+    "opened_door": {
+        "close_microwave_door": {
+            "description": "Close the microwave door by swinging it to the closed position.",
+            "actions": ["flap_close['door']"]
+        }
+    },
+    "closed_door": {
+        "open_microwave_door": {
+            "description": "Open the microwave door by swinging it to the open position.",
+            "actions": ["flap_open['door']"] 
+        },
+        "microwave_door_status": {
+            "description": "Microwave door is already closed, no actions needed.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "rotation_tray": {
+        "rotate_microwave_tray": {
+            "description": "Rotate the microwave tray.",
+            "actions": ["rotate['rotation_tray']"]
+        },
+        "clean_rotation_tray": {
+            "description": "Cleaning the microwave rotation tray to remove any spills.",
+            "actions": ["wipe['rotation_tray']"]
+        }
+    },
+    "general": {
+        "clean_microwave_body":{
+            "description": "Cleaning the outer body of the microwave to remove any dust.",
+            "actions": ["wipe['microwave_body']"]
+        },
+        "clean_microwave_door":{
+            "description": "Clean the microwave door to keep it transparent.",
+            "actions": ["wipe['door']"]
+        },
+        "clean_whole_microwave":{
+            "description": "Clean the entire microwave including the body, door, and rotation tray.",
+            "actions": ["wipe['microwave_body']", "wipe['door']", "wipe['rotation_tray']"]
+        },
+        "operate_microwave":{
+            "description": "Operate the microwave by opening the door, rotating the tray and then closing the door.",
+            "actions": ["flap_open['door']", "rotate['rotation_tray']", "flap_close['door']"]
+        }
+    }
+}
+}

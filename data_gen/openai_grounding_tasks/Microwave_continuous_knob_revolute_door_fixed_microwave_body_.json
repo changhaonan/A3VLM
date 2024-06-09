@@ -1,0 +1,40 @@
+{
+"Microwave": {
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the knob of the microwave.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "opened_door": {
+        "close_door": {
+            "description": "Flap close the door of the microwave.",
+            "actions": ["flap_close['door']"]
+        }
+    },
+    "closed_door": {
+        "open_door": {
+            "description": "Flap open the door of the microwave.",
+            "actions": ["flap_open['door']"] 
+        },
+        "do_nothing": {
+            "description": "The door of the microwave is already in closed position.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "general": {
+        "clean_microwave_body":{
+            "description": "Clean the microwave body to remove dust or any other particles.",
+            "actions": ["wipe['microwave_body']"]
+        },
+        "clean_knob":{
+            "description": "Clean the knob to ensure proper functioning.",
+            "actions": ["wipe['knob']"]
+        },
+        "clean_whole_microwave":{
+            "description": "Clean the entire microwave including knob and the microwave body.",
+            "actions": ["wipe['microwave_body']", "wipe['knob']"]
+        }
+    }
+}
+}

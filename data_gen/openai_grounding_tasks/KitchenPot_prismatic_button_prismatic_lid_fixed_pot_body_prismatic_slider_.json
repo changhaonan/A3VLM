@@ -1,0 +1,42 @@
+{
+  "KitchenPot": {
+    "lid": {
+      "rotate_lid": {
+        "description": "Rotate the lid for proper closure.",
+        "actions": ["rotate['lid']"]
+      }
+    },
+    "button": {
+      "press_button": {
+        "description": "Press the button to operate the pot.",
+        "actions": ["press['button']"]
+      }
+    },
+    "slider": {
+      "slide_in_slider": {
+        "description": "Slide the slider in.",
+        "actions": ["slide_in['slider']"]
+      },
+      "slide_out_slider": {
+        "description": "Slide the slider out.",
+        "actions": ["slide_out['slider']"]
+      }
+    },
+    "pot_body": {
+      "wipe_pot_body": {
+        "description": "Wipe the body of the pot to clean it.",
+        "actions": ["wipe['pot_body']"]
+      }
+    },
+    "general": {
+      "clean_whole_pot": {
+        "description": "Clean the entire pot including lid, button, slider, and pot_body.",
+        "actions": ["wipe['lid']", "wipe['button']", "wipe['slider']", "wipe['pot_body']"]
+      },
+      "prepare_pot": {
+        "description": "Prepare the pot by pressing the button, sliding slider in, and rotating the lid.",
+        "actions": ["press['button']", "slide_in['slider']", "rotate['lid']"]
+      }
+    }
+  } 
+}

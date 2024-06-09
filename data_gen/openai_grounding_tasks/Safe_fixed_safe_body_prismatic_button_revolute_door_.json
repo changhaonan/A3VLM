@@ -1,0 +1,106 @@
+{
+    "Safe": {
+        "button": {
+            "clean_button": {
+                "description": "Clean the button to avoid dust accumulation.",
+                "actions": [
+                    "wipe['button']"
+                ]
+            },
+            "press_button": {
+                "description": "Press the button for safe operation.",
+                "actions": [
+                    "press['button']"
+                ]
+            },
+            "test_button": {
+                "description": "Apply pressure to test the button.",
+                "actions": [
+                    "press['button']"
+                ]
+            }
+        },
+        "closed_door": {
+            "safe_open": {
+                "description": "Open the safe by operating the door.",
+                "actions": [
+                    "flap_open['door']"
+                ]
+            },
+            "door_status_confirm": {
+                "description": "Confirm the status of the door.",
+                "actions": [
+                    "StatusComplete"
+                ]
+            },
+            "access_safe": {
+                "description": "Access the safe by opening the door.",
+                "actions": [
+                    "flap_open['door']"
+                ]
+            },
+            "verify_door_status": {
+                "description": "Check the status of the door.",
+                "actions": [
+                    "StatusComplete"
+                ]
+            }
+        },
+        "opened_door": {
+            "safe_close": {
+                "description": "Close the safe by operating the door.",
+                "actions": [
+                    "flap_close['door']"
+                ]
+            },
+            "door_status_confirm": {
+                "description": "Confirm status of the door.",
+                "actions": [
+                    "StatusComplete"
+                ]
+            },
+            "secure_door": {
+                "description": "Secure the door by manually closing it.",
+                "actions": [
+                    "flap_close['door']"
+                ]
+            }
+        },
+        "general": {
+            "clean_safe_body": {
+                "description": "Clean the safe coating to maintain its look.",
+                "actions": [
+                    "wipe['safe_body']"
+                ]
+            },
+            "wiping_full_safe": {
+                "description": "Clean entire safe including door, button and body.",
+                "actions": [
+                    "wipe['door']",
+                    "wipe['button']",
+                    "wipe['safe_body']"
+                ]
+            },
+            "maintain_safe_body": {
+                "description": "Maintain the cleanliness of the safe body.",
+                "actions": [
+                    "wipe['safe_body']"
+                ]
+            },
+            "sanitise_button": {
+                "description": "Clean the button to ensure hygiene.",
+                "actions": [
+                    "wipe['button']"
+                ]
+            },
+            "complete_clean_safe": {
+                "description": "Cleaning process involving safe body, door, and button.",
+                "actions": [
+                    "wipe['safe_body']",
+                    "wipe['button']",
+                    "wipe['door']"
+                ]
+            }
+        }
+    }
+}

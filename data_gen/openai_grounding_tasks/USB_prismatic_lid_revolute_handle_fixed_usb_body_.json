@@ -1,0 +1,40 @@
+{
+"USB": {
+    "handle": {
+        "rotate_handle": {
+            "description": "Rotate the handle.",
+            "actions": ["rotate['handle']"]
+        },
+        "wipe_handle": {
+            "description": "Clean the handle to ensure proper aesthetic appeal and functionality.",
+            "actions": ["wipe['handle']"]
+        }
+    },
+    "lid": {
+        "slide_in_lid": {
+            "description": "Slide in the lid to secure the USB drive.",
+            "actions": ["slide_in['lid']"] 
+        },
+        "slide_out_lid": {
+            "description": "Slide out the lid to expose the USB plug.",
+            "actions": ["slide_out['lid']"] 
+        }
+    },
+    "usb_body" : {
+        "wipe_usb_body":{
+            "description": "Clean the USB body to remove dust particles.",
+            "actions": ["wipe['usb_body']"]
+        }
+    },
+    "general": {
+        "clean_whole_usb":{
+            "description": "Clean the entire USB including the handle, lid, and body.",
+            "actions": ["wipe['handle']", "wipe['lid']", "wipe['usb_body']"]
+        },
+        "prepare_usb_for_use":{
+            "description": "Get the USB ready for use by sliding out the lid and rotating the handle.",
+            "actions": ["slide_out['lid']", "rotate['handle']"]
+        }
+    }
+}
+}

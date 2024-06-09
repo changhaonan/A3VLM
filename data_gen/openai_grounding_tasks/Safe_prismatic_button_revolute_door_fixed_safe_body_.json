@@ -1,0 +1,69 @@
+{
+    "Safe": {
+        "button": {
+            "press_button": {
+                "description": "Press the button to unlock the safe.",
+                "actions": [
+                    "press['button']"
+                ]
+            },
+            "wipe_button": {
+                "description": "Wipe the button to clean any dirt or spot.",
+                "actions": [
+                    "wipe['button']"
+                ]
+            }
+        },
+        "opened_door": {
+            "close_door": {
+                "description": "Close the door of the safe securing its content.",
+                "actions": [
+                    "flap_close['door']"
+                ]
+            },
+            "rotate_opened_door": {
+                "description": "Rotate the door slightly to examine its hinge condition.",
+                "actions": [
+                    "rotate['door']"
+                ]
+            }
+        },
+        "closed_door": {
+            "open_door": {
+                "description": "Open the safe's door in order to access its content.",
+                "actions": [
+                    "flap_open['door']"
+                ]
+            },
+            "examine_closed_door": {
+                "description": "Keep the door status unchanged and examine it.",
+                "actions": [
+                    "StatusComplete"
+                ]
+            },
+            "wipe_closed_door": {
+                "description": "Wipe the safe's closed door to clean it.",
+                "actions": [
+                    "wipe['door']"
+                ]
+            }
+        },
+        "general": {
+            "clean_safe": {
+                "description": "Clean the entire safe including the button and door.",
+                "actions": [
+                    "wipe['button']",
+                    "wipe['door']",
+                    "wipe['safe_body']"
+                ]
+            },
+            "press_and_open_safe": {
+                "description": "Press the button and then open the safe's door.",
+                "actions": [
+                    "press['button']",
+                    "flap_open['door']"
+                ]
+            }
+        }
+    }
+}

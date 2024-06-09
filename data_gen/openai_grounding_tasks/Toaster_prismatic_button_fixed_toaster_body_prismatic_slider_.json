@@ -1,0 +1,32 @@
+{
+"Toaster": {
+    "button": {
+        "press_toaster_button": {
+            "description": "Press the button to activate the toaster.",
+            "actions": ["press['button']"]
+        }
+    },
+    "slider": {
+        "slide_in": {
+            "description": "Slide in the toaster's tray, preparing for toasting.",
+            "actions": ["slide_in['slider']"]
+        },
+        "slide_out": {
+            "description": "Slide out the toaster's tray after toasting.",
+            "actions": ["slide_out['slider']"]
+        }
+    },
+    "toaster_body": {
+        "clean_toaster_body":{
+            "description": "Clean the toaster body to remove crumbs and dust particles.",
+            "actions": ["wipe['toaster_body']"]
+        }
+    },
+    "general": {
+        "prep_toast":{
+            "description": "Prepare the toaster for toasting process.",
+            "actions": ["slide_in['slider']", "press['button']"]
+        }
+    }
+}
+}

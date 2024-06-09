@@ -1,0 +1,32 @@
+{
+"Kettle": {
+    "lid": {
+        "clean_lid": {
+            "description": "Clean the lid of the kettle to remove any dirt or grime.",
+            "actions": ["wipe['lid']"]
+        }
+    },
+    "handle": {
+        "clean_handle": {
+            "description": "Clean the handle of the kettle to ensure a good grip and hygiene.",
+            "actions": ["wipe['handle']"]
+        },
+        "rotate_handle": {
+            "description": "Rotate the handle to pour out water or any other beverage.",
+            "actions": ["rotate['handle']"] 
+        }
+    },
+    "kettle_body": {
+        "clean_kettle_body": {
+            "description": "Clean the body of the kettle to maintain cleanliness and hygiene.",
+            "actions": ["wipe['kettle_body']"]
+        }
+    },
+    "general": {
+        "clean_entire_kettle": {
+            "description": "Clean the entire kettle including handle, body, and lid.",
+            "actions": ["wipe['lid']", "wipe['handle']", "wipe['kettle_body']"]
+        }
+    }
+}
+}

@@ -1,0 +1,54 @@
+{
+    "Printer": {
+        "button": {
+            "press_button": {
+                "description": "Press the provided button to power up the printer or to print the document.",
+                "actions": [
+                    "press['button']"
+                ]
+            }
+        },
+        "knob": {
+            "rotate_knob": {
+                "description": "Rotate the knob clockwise or anticlockwise to adjust the settings of the printer.",
+                "actions": [
+                    "rotate['knob']"
+                ]
+            }
+        },
+        "slider": {
+            "slide_out_slider": {
+                "description": "Slide out the slider to add new pages into the printer or to remove any jammed pages.",
+                "actions": [
+                    "slide_out['slider']"
+                ]
+            },
+            "slide_in_slider": {
+                "description": "Slide in the slider after adding new pages or once the jammed paper is removed.",
+                "actions": [
+                    "slide_in['slider']"
+                ]
+            }
+        },
+        "printer_body": {
+            "clean_printer_body": {
+                "description": "Clean the printer body to remove dust or any other external particles.",
+                "actions": [
+                    "wipe['printer_body']"
+                ]
+            }
+        },
+        "general": {
+            "maintain_printer": {
+                "description": "Routine check-up and maintenance for printer",
+                "actions": [
+                    "press['button']",
+                    "rotate['knob']",
+                    "slide_out['slider']",
+                    "slide_in['slider']",
+                    "wipe['printer_body']"
+                ]
+            }
+        }
+    }
+}

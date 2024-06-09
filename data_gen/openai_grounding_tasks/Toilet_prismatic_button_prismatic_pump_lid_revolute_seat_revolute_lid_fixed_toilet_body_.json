@@ -1,0 +1,66 @@
+{
+"Toilet": {
+    "button": {
+        "press_button": {
+            "description": "Press the flush button on the toilet.",
+            "actions": ["press['button']"]
+        }
+    },
+    "pump_lid": {
+        "clean_pump_lid": {
+            "description": "Wipe the surface of the pump lid to keep it clean.",
+            "actions": ["wipe['pump_lid']"]
+        }
+    },
+    "opened_lid": {
+        "close_lid": {
+            "description": "Close the toilet lid by swinging it on its hinge.",
+            "actions": ["flap_close['lid']"]
+        }
+    },
+    "closed_lid": {
+        "open_lid": {
+            "description": "Open the toilet lid by swinging it on its hinge.",
+            "actions": ["flap_open['lid']"]
+        },
+        "close_lid": {
+            "description": "Keep the toilet lid in its place.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "opened_seat":{
+        "close_seat":{
+            "description": "Close the toilet seat by swinging it on its hinges.",
+            "actions": ["flap_close['seat']"]
+        }
+    },
+    "closed_seat":{
+        "open_seat":{
+            "description": "Open the toilet seat by swinging it on its hinges.",
+            "actions": ["flap_open['seat']"]
+        },
+        "close_seat":{
+            "description": "Keep the toilet seat closed.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "general": {
+        "clean_toilet_body":{
+            "description": "Clean the main body of the toilet bowl.",
+            "actions": ["wipe['toilet_body']"]
+        },
+        "clean_seat":{
+            "description": "Clean the toilet seat to ensure hygiene.",
+            "actions": ["wipe['seat']"]
+        },
+        "clean_lid":{
+            "description": "Clean the toilet lid to keep it free of dirt and bacteria.",
+            "actions": ["wipe['lid']"]
+        },
+        "clean_whole_toilet":{
+            "description": "Clean the whole toilet including button, pump lid, seat, lid, and toilet body.",
+            "actions": ["wipe['button']", "wipe['pump_lid']", "wipe['seat']", "wipe['lid']", "wipe['toilet_body']"]
+        }
+    }
+}
+}

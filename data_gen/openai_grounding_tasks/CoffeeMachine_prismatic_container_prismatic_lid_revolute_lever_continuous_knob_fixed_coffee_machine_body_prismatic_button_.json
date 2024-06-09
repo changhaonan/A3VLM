@@ -1,0 +1,64 @@
+{
+  "CoffeeMachine": {
+      "button": {
+      "use_button": {
+          "description": "Press the button on the coffee machine.",
+          "actions": ["press['button']"]
+      },
+      "clean_button":{
+          "description": "Clean the button to remove dust or any other particles.",
+          "actions": ["wipe['button']"]
+      }
+      },
+      "lid":{
+      "use_lid": {
+          "description": "Press the lid to close or open it.",
+          "actions": ["press['lid']"]
+      },
+      "clean_lid":{
+          "description": "Clean the lid to remove coffee fragments.",
+          "actions": ["wipe['lid']"]
+      }
+      },
+      "container":{
+      "clean_container":{
+          "description": "Clean the container to remove coffee fragments.",
+          "actions": ["wipe['container']"]
+      },
+      "use_container": {
+          "description": "Press the container to empty used coffee.",
+          "actions": ["press['container']"]
+      }
+      },
+      "lever":{
+      "rotate_lever": {
+          "description": "Rotate the lever to pour coffee.",
+          "actions": ["rotate['lever']"]
+      },
+      "clean_lever":{
+          "description": "Clean the lever to remove any residue from the coffee or milk.",
+          "actions": ["wipe['lever']"]
+      }
+      },
+      "knob":{
+      "rotate_knob":{
+          "description": "Rotate the knob to choose different coffee brewing options.",
+          "actions": ["rotate['knob']"]
+      },
+      "clean_knob":{
+          "description": "Clean the knob to remove any residue from the coffee.",
+          "actions": ["wipe['knob']"]
+      }
+      },
+      "general": {
+      "clean_coffee_machine_body":{
+          "description": "Clean the coffee machine body to keep it neat.",
+          "actions": ["wipe['coffee_machine_body']"]
+      },
+      "clean_whole_coffee_machine":{
+          "description": "Clean the entire coffee machine including the button, lid, container, lever, knob, and the coffee machine body.",
+          "actions": ["wipe['button']", "wipe['lid']", "wipe['container']", "wipe['lever']", "wipe['knob']", "wipe['coffee_machine_body']"]
+      }
+      }
+  }
+}

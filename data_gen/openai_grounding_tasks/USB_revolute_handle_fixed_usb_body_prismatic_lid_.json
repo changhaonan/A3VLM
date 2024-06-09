@@ -1,0 +1,36 @@
+{
+  "USB": {
+    "handle": {
+        "rotate_handle": {
+            "description": "Rotate the handle.",
+            "actions": ["rotate['handle']"]
+        },
+        "clean_handle":{
+            "description": "Clean the handle to ensure smooth rotation.",
+            "actions": ["wipe['handle']"]
+        }
+    },
+    "lid": {
+        "clean_lid": {
+            "description": "Clean the lid to ensure proper slide functioning.",
+            "actions": ["wipe['lid']"]
+        },
+        "slide_lid": {
+            "description": "Due to the N.A. status, the slide action can't be performed.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "usb_body": {
+        "clean_usb_body":{
+            "description": "Clean the USB body to remove dust or any other particles.",
+            "actions": ["wipe['usb_body']"]
+        }
+    },
+    "general": {
+        "clean_whole_usb":{
+            "description": "Clean the entire USB including the handle, lid, and body.",
+            "actions": ["wipe['handle']", "wipe['lid']", "wipe['usb_body']"]
+        }
+    }
+  }
+}

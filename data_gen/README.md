@@ -24,5 +24,5 @@ python render_robot_pyrender.py --data_name="all" --data_dir=${PartNet-Mobility_
 Finally, we can generate the instruction-following data.
 
 ```python
-python partnet_label.py --data_name="all" --data_dir=${PartNet-Mobility_path} --output_dir=${output_path}
+python partnet_label.py --data_name="all" --data_dir=${PartNet-Mobility_path} --output_dir=${output_path}  --vqa_tasks_folder=${--vqa_tasks_folder}
 ```

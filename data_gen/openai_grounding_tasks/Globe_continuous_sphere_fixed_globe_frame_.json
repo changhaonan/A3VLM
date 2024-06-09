@@ -1,0 +1,42 @@
+{
+    "Globe": {
+        "sphere": {
+            "rotate_sphere": {
+                "description": "Rotate the sphere of the globe to change the position.",
+                "actions": [
+                    "rotate['sphere']"
+                ]
+            }
+        },
+        "globe_frame": {
+            "wipe_frame": {
+                "description": "Wipe the frame of the globe to keep it clean and clear the dust.",
+                "actions": [
+                    "wipe['globe_frame']"
+                ]
+            },
+            "inspect_frame": {
+                "description": "Inspect the frame of the globe for any damage or wear.",
+                "actions": [
+                    "StatusComplete"
+                ]
+            }
+        },
+        "general": {
+            "clean_whole_globe": {
+                "description": "Clean the entire globe including the sphere and the frame.",
+                "actions": [
+                    "wipe['sphere']",
+                    "wipe['globe_frame']"
+                ]
+            },
+            "rotate_and_inspect": {
+                "description": "Rotate the sphere and inspect the frame for any issues.",
+                "actions": [
+                    "rotate['sphere']",
+                    "StatusComplete"
+                ]
+            }
+        }
+    }
+}

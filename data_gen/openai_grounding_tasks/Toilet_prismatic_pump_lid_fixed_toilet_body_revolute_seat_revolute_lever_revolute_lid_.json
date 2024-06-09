@@ -1,0 +1,58 @@
+{
+"Toilet": {
+    "lever": {
+        "press_lever": {
+            "description": "Press the lever to flush the toilet.",
+            "actions": ["press['lever']"]
+        }
+    },
+    "pump_lid": {
+        "clean_pump_lid":{
+            "description": "Clean the pump lid to ensure proper functioning.",
+            "actions": ["wipe['pump_lid']"]
+        }
+    },
+    "closed_lid": {
+        "open_lid": {
+            "description": "Open the toilet lid by lifting it upwards.",
+            "actions": ["flap_open['lid']"]
+        },
+        "keep_lid_closed": {
+            "description": "Keep the toilet lid closed.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "opened_lid": {
+        "close_lid": {
+            "description": "Close the toilet lid by putting it downwards.",
+            "actions": ["flap_close['lid']"] 
+        }
+    },
+    "closed_seat": {
+        "lift_seat": {
+            "description": "Lift the toilet seat by pulling it upwards.",
+            "actions": ["flap_open['seat']"]
+        },
+        "keep_seat_down": {
+            "description": "Keep the toilet seat down.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "opened_seat": {
+        "lower_seat": {
+            "description": "Lower the toilet seat by pushing it downwards.",
+            "actions": ["flap_close['seat']"]
+        }
+    },
+    "general": {
+        "clean_toilet_body": {
+            "description": "Clean the toilet body to maintain hygiene.",
+            "actions": ["wipe['toilet_body']"]
+        },
+        "clean_whole_toilet": {
+            "description": "Clean the entire toilet including the toilet body, lid, seat, and lever.",
+            "actions": ["wipe['toilet_body']", "wipe['lever']", "wipe['lid']", "wipe['seat']", "wipe['pump_lid']"]
+        }
+    }
+}
+}

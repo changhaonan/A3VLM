@@ -1,0 +1,38 @@
+{
+"CoffeeMachine": {
+    "portafilter": {
+        "rotate_portafilter": {
+            "description": "Rotate the portafilter to ensure it is secured tightly.",
+            "actions": ["rotate['portafilter']"]
+        }
+    },
+    "lever": {
+        "rotate_lever": {
+            "description": "Rotate the lever to start the coffee brewing process.",
+            "actions": ["rotate['lever']"]
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the button to start the coffee machine.",
+            "actions": ["press['button']"]
+        }
+    },
+    "coffee_machine_body": {
+            "clean_coffee_machine": {
+                "description": "Clean the coffee machine body to ensure it is clean and hygienic.",
+                "actions": ["wipe['coffee_machine_body']"]
+            }
+    },
+    "general": {
+         "clean_all": {
+            "description": "Clean the entire coffee machine, including the portafilter, lever, button, and body.",
+            "actions": ["wipe['coffee_machine_body']", "wipe['portafilter']", "wipe['lever']", "wipe['button']"]
+         },
+         "operate_coffee_machine": {
+            "description": "Operate the coffee machine by pressing the button and rotating the lever and portafilter.",
+            "actions": ["press['button']", "rotate['lever']", "rotate['portafilter']"]
+         }
+    }
+}
+}

@@ -623,7 +623,7 @@ if __name__ == "__main__":
     else:
         shutil.rmtree(visual_save_folder)
         os.makedirs(visual_save_folder, exist_ok=True)
-    json_folder = f"/mnt/petrelfs/huangsiyuan/LLaMA2-Accessory/accessory/vqa_logs/{json_folder_name}"
+    json_folder = f"/mnt/petrelfs/XXXXX/LLaMA2-Accessory/accessory/vqa_logs/{json_folder_name}"
     jsons = os.listdir(json_folder)
     sample_num = 20
     totoal_index = 0

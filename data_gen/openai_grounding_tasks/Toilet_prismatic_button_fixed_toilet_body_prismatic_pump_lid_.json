@@ -1,0 +1,32 @@
+{
+"Toilet": {
+    "pump_lid": {
+        "clean_pump_lid": {
+            "description": "Clean the pump lid to ensure it is free from dirt and debris.",
+            "actions": ["wipe['pump_lid']"]
+        }
+    },
+    "toilet_body": {
+        "clean_toilet_body": {
+            "description": "Clean the toilet body to keep it free from germs and stains.",
+            "actions": ["wipe['toilet_body']"]
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the button to flush the toilet.",
+            "actions": ["press['button']"]
+        },
+        "clean_button": {
+            "description": "Wipe the button to ensure it is clean.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "general": {
+        "clean_toilet":{
+            "description": "The whole toilet including the toilet body, pump lid, and button should be cleaned.",
+            "actions": ["wipe['toilet_body']", "wipe['pump_lid']", "wipe['button']"]
+        }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+"Fan": {
+    "rotor": {
+        "rotate_rotor": {
+            "description": "Rotate the fan's rotor.",
+            "actions": ["rotate['rotor']"]
+        }
+    },
+    "slider": {
+        "slide": {
+            "description": "Slide the fan's slider in an axial motion.",
+            "actions": ["slide_in['slider']", "slide_out['slider']"]
+        }
+    },
+    "fan_frame": {
+        "clean_frame":{
+            "description": "Clean the fan frame to remove dust or any other particles.",
+            "actions": ["wipe['fan_frame']"]
+        }
+    },
+    "general": {
+        "clean_rotor":{
+            "description": "Clean the rotor to ensure smooth rotation.",
+            "actions": ["wipe['rotor']"]
+        },
+
+        "clean_slider":{
+            "description": "Clean the slider to ensure it slides properly.",
+            "actions": ["wipe['slider']"]
+        },
+        "clean_whole_fan":{
+            "description": "Clean the entire fan including the rotor, slider, and frame.",
+            "actions": ["wipe['rotor']", "wipe['slider']", "wipe['fan_frame']"]
+        }
+    }
+}
+}

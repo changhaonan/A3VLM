@@ -1,3 +1,5 @@
+"""Iteratively create query json files for the demo interface.
+"""
 import os
 import re
 import json
@@ -40,26 +42,25 @@ def parse_string_to_dict(input_str):
     return bbox_list
 
 
-def create_json_step1():
-    root_dir = "/mnt/petrelfs/huangsiyuan/data/ManipVQA2/eval_demo/eval_prepare"
-    all_items = os.listdir(root_dir)
+def create_json_step1(root_dir):
+    data_dir = f"{root_dir}/eval_prepare"
+    all_items = os.listdir(data_dir)
 
     vqa_tasks = []
     for item_ in all_items:
-        imaage_full_path = os.path.join(root_dir, item_, "color.png")
+        imaage_full_path = os.path.join(data_dir, item_, "color.png")
         if not os.path.exists(imaage_full_path):
             continue
         vqa_tasks.append(
             {"image": imaage_full_path, "conversations": [{"from": "human", "value": "Detect all manipulable object parts and provide their 3D bounding boxes."}, {"from": "gpt", "value": None}]}
         )
 
-    demo_json_path = "/mnt/petrelfs/huangsiyuan/data/ManipVQA2/eval_demo/demo_det_all.json"
+    demo_json_path = f"{root_dir}/eval_demo/demo_det_all.json"
     with open(demo_json_path, "w") as f:
         json.dump(vqa_tasks, f, indent=4)
 
 
-def create_json_step2():
-    step1_infer_result = "/mnt/petrelfs/huangsiyuan/LLaMA2-Accessory/accessory/vqa_logs/affordance_v5_rgb_8points/demo.json"
+def create_json_step2(step1_infer_result, demo_json_path):
     with open(step1_infer_result, "r") as f:
         vqa_tasks = json.load(f)
 
@@ -107,7 +108,6 @@ def create_json_step2():
                 }
             )
 
-    demo_json_path = "/mnt/petrelfs/huangsiyuan/data/ManipVQA2/eval_demo/demo_joint_rec.json"
     with open(demo_json_path, "w") as f:
         json.dump(step2_tasks, f, indent=4)
 

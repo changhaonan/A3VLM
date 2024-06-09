@@ -1,0 +1,26 @@
+{
+"Suitcase": {
+    "rotation_handle": {
+        "rotate_handle": {
+            "description": "Rotate the handle.",
+            "actions": ["rotate['rotation_handle']"]
+        }
+    },
+    "suitcase_body": {
+        "clean_suitcase": {
+            "description": "Clean the suitcase body to remove dust or any other particles.",
+            "actions": ["wipe['suitcase_body']"]
+        }
+    },
+    "general": {
+        "clean_handle":{
+            "description": "Clean the handle to ensure smooth rotation.",
+            "actions": ["wipe['rotation_handle']"]
+        },
+        "clean_whole_suitcase":{
+            "description": "Clean the entire suitcase including the suitcase body and handle.",
+            "actions": ["wipe['suitcase_body']", "wipe['rotation_handle']"]
+        }
+    }
+}
+}

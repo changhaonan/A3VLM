@@ -1,0 +1,46 @@
+{
+"CoffeeMachine": {
+    "button": {
+        "press_button": {
+            "description": "Press the button to start making coffee.",
+            "actions": ["press['button']"]
+        },
+        "clean_button": {
+            "description": "Clean the button to ensure it is dust free.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the knob to change the coffee strength.",
+            "actions": ["rotate['knob']"] 
+        },
+        "clean_knob": {
+            "description": "Clean the knob to ensure proper rotation.",
+            "actions": ["wipe['knob']"] 
+        }
+    },
+    "container": {
+        "clean_container": {
+            "description": "Clean the container to remove any residue.",
+            "actions": ["wipe['container']"]
+        }
+    },
+    "lid": {
+        "clean_lid": {
+            "description": "Clean the container lid to ensure it fits snugly.",
+            "actions": ["wipe['lid']"]
+        }
+    },
+    "coffee_machine_body": {
+        "clean_coffee_machine_body":{
+            "description": "Clean the coffee machine body to remove dust or any other particles.",
+            "actions": ["wipe['coffee_machine_body']"]
+        },
+        "clean_whole_coffee_machine":{
+            "description": "Clean the entire coffee machine including the body, knob, button, container, and lid.",
+            "actions": ["wipe['coffee_machine_body']", "wipe['button']", "wipe['knob']", "wipe['container']", "wipe['lid']"]
+        }
+    }
+}
+}

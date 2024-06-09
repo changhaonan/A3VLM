@@ -1,0 +1,60 @@
+{
+    "CoffeeMachine": {
+        "knob": {
+            "make_coffee": {
+                "description": "Rotate the knob to set the coffee-making process in motion.",
+                "actions": [
+                    "rotate['knob']"
+                ]
+            },
+            "wipe_knob": {
+                "description": "Wipe the knob to ensure it stays clean and retains a glossy finish",
+                "actions": [
+                    "wipe['knob']"
+                ]
+            },
+            "rotate_knob": {
+                "description": "Rotate the knob to adjust the settings.",
+                "actions": [
+                    "rotate['knob']"
+                ]
+            },
+            "clean_knob": {
+                "description": "Clean the knob to ensure proper functioning and hygiene.",
+                "actions": [
+                    "wipe['knob']"
+                ]
+            }
+        },
+        "coffee_machine_body": {
+            "polish_coffee_machine_body": {
+                "description": "Wipe the exterior of the coffee machine to maintain its polished look.",
+                "actions": [
+                    "wipe['coffee_machine_body']"
+                ]
+            },
+            "clean_coffee_machine_body": {
+                "description": "Clean the coffee machine body to ensure proper hygiene and aesthetics.",
+                "actions": [
+                    "wipe['coffee_machine_body']"
+                ]
+            }
+        },
+        "general": {
+            "sanitize_coffee_machine": {
+                "description": "Sanitize the coffee machine by wiping both the knob and the machine body.",
+                "actions": [
+                    "wipe['coffee_machine_body']",
+                    "wipe['knob']"
+                ]
+            },
+            "clean_whole_coffee_machine": {
+                "description": "Clean the entire coffee machine including the body and the knob.",
+                "actions": [
+                    "wipe['coffee_machine_body']",
+                    "wipe['knob']"
+                ]
+            }
+        }
+    }
+}

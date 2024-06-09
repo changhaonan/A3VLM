@@ -1,0 +1,51 @@
+{
+"CoffeeMachine": {
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the knob on the coffee machine.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "lever": {
+        "rotate_lever": {
+            "description": "Rotate the lever on the coffee machine.",
+            "actions": ["rotate['lever']"]
+        }
+    },
+    "portafilter": {
+        "rotate_portafilter": {
+            "description": "Rotate the portafilter on the coffee machine to secure.",
+            "actions": ["rotate['portafilter']"] 
+        },
+        "press_portafilter": {
+            "description": "Press the portafilter to fill coffee ground and secure. Rotate after pressed",
+            "actions": ["press['portafilter']", "rotate['portafilter']"] 
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the button on the coffee machine to start coffee preparation.",
+            "actions": ["press['button']"] 
+        }
+    },
+    "general": {
+        "clean_coffee_machine_body":{
+            "description": "Clean the coffee machine body to remove coffee leaks or stains.",
+            "actions": ["wipe['coffee_machine_body']"]
+        },
+
+        "clean_knob":{
+            "description": "Clean the knob on the coffee machine to remove coffee stains.",
+            "actions": ["wipe['knob']"]
+        },
+        "clean_lever":{
+            "description": "Clean the lever on the coffee machine to remove any coffee stains or dust.",
+            "actions": ["wipe['lever']"]
+        },
+        "clean_whole_coffee_machine":{
+            "description": "Clean the entire coffee machine including the coffee machine body, knob, lever, portafilter, and button.",
+            "actions": ["wipe['coffee_machine_body']", "wipe['knob']", "wipe['lever']", "wipe['portafilter']", "wipe['button']"]
+        }
+    }
+}
+}

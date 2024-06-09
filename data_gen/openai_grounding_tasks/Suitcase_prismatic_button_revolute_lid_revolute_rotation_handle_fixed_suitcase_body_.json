@@ -1,0 +1,46 @@
+{
+"Suitcase": {
+    "button": {
+        "press_button": {
+            "description": "Press the button to lock or unlock the suitcase.",
+            "actions": ["press['button']"]
+        }
+    },
+    "opened_lid": {
+        "close_lid": {
+            "description": "Close the suitcase lid by taking it from open position to closed position.",
+            "actions": ["flap_close['lid']"]
+        }
+    },
+    "closed_lid": {
+        "open_lid": {
+            "description": "Open the suitcase lid by moving it from closed position to open position.",
+            "actions": ["flap_open['lid']"] 
+        },
+        "close_lid": {
+            "description": "The lid is already closed, no action needed",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "rotation_handle": {
+        "rotate_handle": {
+            "description": "Rotate the handle to move the suitcase easily.",
+            "actions": ["rotate['rotation_handle']"]
+        }
+    },
+    "general": {
+        "clean_suitcase_body":{
+            "description": "Clean the suitcase body to remove any dirt or stains.",
+            "actions": ["wipe['suitcase_body']"]
+        },
+        "clean_button":{
+            "description": "Wipe the button to ensure it is clean and functioning properly.",
+            "actions": ["wipe['button']"]
+        },
+        "clean_whole_suitcase":{
+            "description": "Clean the entire suitcase including the body, lid, handle and button.",
+            "actions": ["wipe['suitcase_body']", "wipe['button']", "wipe['lid']", "wipe['rotation_handle']"]
+        }
+    }
+}
+}

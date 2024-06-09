@@ -1,0 +1,37 @@
+{
+"WashingMachine": {
+    "opened_door": {
+        "close_door": {
+            "description": "Proceed to close the door by rotating it to the closed position.",
+            "actions": ["flap_close['door']"]
+        }
+    },
+    "closed_door": {
+        "open_door": {
+            "description": "Proceed to open the door by rotating it.",
+            "actions": ["flap_open['door']"]
+        },
+        "keep_door_closed": {
+            "description": "Ensure the door remains in closed position.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "knob": {
+        "turn_knob": {
+            "description": "Turn the specific portion of the washing machine dubbed 'knob'.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "general": {
+        "clean_machine_body":{
+            "description": "Proceed to clean the body of the washing machine to get rid of dirt.",
+            "actions": ["wipe['washing_machine_body']"]
+        },
+
+        "clean_machine":{
+            "description": "Perform a comprehensive cleaning of all exposed parts of the washing machine.",
+            "actions": ["wipe['washing_machine_body']", "wipe['knob']", "wipe['door']"]
+        }
+    }
+}
+}

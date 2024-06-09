@@ -1,0 +1,51 @@
+{
+"Box": {
+    "handle": {
+        "rotate_handle": {
+            "description": "Rotate the handle of the box.",
+            "actions": ["rotate['handle']"]
+        }
+    },
+    "opened_rotation_lid": {
+        "close_rotation_lid": {
+            "description": "Close the rotation lid of the box.",
+            "actions": ["flap_close['rotation_lid']"]
+        }
+    },
+    "closed_rotation_lid": {
+        "open_rotation_lid": {
+            "description": "Open the rotation lid of the box.",
+            "actions": ["flap_open['rotation_lid']"] 
+        },
+        "close_rotation_lid": {
+            "description": "The rotation lid of the box is already closed.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "lock": {
+        "rotate_lock": {
+            "description": "Rotate the lock of the box.",
+            "actions": ["rotate['lock']"]
+        }
+    },
+    "general": {
+        "clean_box_body":{
+            "description": "Clean the box body to remove dirt and dust.",
+            "actions": ["wipe['box_body']"]
+        },
+
+        "clean_rotation_lid":{
+            "description": "Clean the rotation lid of the box to ensure smooth operation.",
+            "actions": ["wipe['rotation_lid']"]
+        },
+        "clean_whole_box":{
+            "description": "Clean the entire box including the box body, lid, handle, and lock.",
+            "actions": ["wipe['box_body']", "wipe['rotation_lid']", "wipe['handle']", "wipe['lock']"]
+        },
+        "clean_and_open_box":{
+            "description": "Clean the box, then open the lid.",
+            "actions": ["wipe['box_body']", "wipe['rotation_lid']", "wipe['handle']", "wipe['lock']", "flap_open['rotation_lid']"]
+        }
+    }
+}
+}

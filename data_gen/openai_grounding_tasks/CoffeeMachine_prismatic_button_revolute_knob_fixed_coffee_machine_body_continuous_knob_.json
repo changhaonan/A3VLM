@@ -1,0 +1,30 @@
+{
+"CoffeeMachine": {
+    "button": {
+        "press_button": {
+            "description": "Press the button to start the coffee brewing process.",
+            "actions": ["press['button']"]
+        }
+    },
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the knob to select the type of coffee or to adjust the strength of the coffee.",
+            "actions": ["rotate['knob']"]
+        },
+        "clean_knob": {
+            "description": "Clean the knob to ensure the smooth rotation.",
+            "actions": ["wipe['knob']"]
+        }
+    },
+    "coffee_machine_body": {
+        "clean_coffee_machine_body": {
+            "description": "Clean the body of the coffee machine to remove any coffee stains or spills.",
+            "actions": ["wipe['coffee_machine_body']"]
+        },
+        "clean_whole_coffee_machine": {
+            "description": "Clean the entire coffee machine including the button, knob, and body.",
+            "actions": ["wipe['button']", "wipe['knob']", "wipe['coffee_machine_body']"]
+        }
+    }
+}
+}

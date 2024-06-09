@@ -1,0 +1,34 @@
+{
+"Toilet": {
+    "opened_seat": {
+        "close_seat": {
+            "description": "Close the toilet seat by swinging it to the closed position.",
+            "actions": ["flap_close['seat']"]
+        }
+    },
+    "closed_seat": {
+        "open_seat": {
+            "description": "Open the toilet seat by swinging it to the open position.",
+            "actions": ["flap_open['seat']"] 
+        },
+        "close_seat": {
+            "description": "Check if the toilet seat is closed.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "general": {
+        "clean_seat":{
+            "description": "Clean the toilet seat to maintain hygiene.",
+            "actions": ["wipe['seat']"]
+        },
+        "clean_toilet_body":{
+            "description": "Clean the toilet body to ensure cleanliness.",
+            "actions": ["wipe['toilet_body']"]
+        },
+        "clean_whole_toilet":{
+            "description": "Clean the entire toilet seat including the toilet body and seat.",
+            "actions": ["wipe['toilet_body']", "wipe['seat']"]
+        }
+    }
+}
+}

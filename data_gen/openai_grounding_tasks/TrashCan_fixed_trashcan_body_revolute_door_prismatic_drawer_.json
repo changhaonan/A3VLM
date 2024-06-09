@@ -1,0 +1,36 @@
+{
+"TrashCan": {
+    "door": {
+        "press_door": {
+            "description": "Press the trash can door.",
+            "actions": ["press['door']"]
+        }
+    },
+    "drawer": {
+        "slide_drawer": {
+            "description": "Slide the trash can drawer to open.",
+            "actions": ["slide_out['drawer']"]
+        },
+        "slide_back_drawer": {
+            "description": "Slide the trash can drawer back to close.",
+            "actions": ["slide_in['drawer']"]
+        }
+    },
+    "trashcan_body": {
+        "clean_trashcan_body":{
+            "description": "Clean the trashcan body to remove dust or any other particles.",
+            "actions": ["wipe['trashcan_body']"]
+        }
+    },
+    "general": {
+        "clean_trashcan_body":{
+            "description": "Clean the trashcan body to remove dust or any other particles.",
+            "actions": ["wipe['trashcan_body']"]
+        },
+        "clean_whole_trashcan":{
+            "description": "Clean the entire trashcan including the body, door, and drawer.",
+            "actions": ["wipe['trashcan_body']", "wipe['door']", "wipe['drawer']"]
+        }
+    }
+}
+}

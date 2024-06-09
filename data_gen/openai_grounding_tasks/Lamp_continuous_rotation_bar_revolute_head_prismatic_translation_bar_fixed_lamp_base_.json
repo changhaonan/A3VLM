@@ -1,0 +1,34 @@
+{
+"Lamp": {
+    "head": {
+        "rotate_head": {
+            "description": "Rotate the head of the lamp to adjust the direction of the light.",
+            "actions": ["rotate['head']"]
+        }
+    },
+    "translation_bar": {
+        "slide_translation_bar": {
+            "description": "Slide the translation bar of the lamp to adjust the height of the lamp.",
+            "actions": ["slide_in['translation_bar']", "slide_out['translation_bar']"]
+        }
+    },
+    "rotation_bar": {
+        "rotate_rotation_bar": {
+            "description": "Rotate the rotation bar of the lamp to adjust the orientation of the lamp arm.",
+            "actions": ["rotate['rotation_bar']"]
+        }
+    },
+    "lamp_base": {
+        "clean_lamp_base":{
+            "description": "Clean the base of the lamp to remove dust or any other particles.",
+            "actions": ["wipe['lamp_base']"]
+        }
+    },
+    "general": {
+        "clean_whole_lamp":{
+            "description": "Clean the entire lamp including the head, translation bar, rotation bar, and base.",
+            "actions": ["wipe['head']", "wipe['translation_bar']", "wipe['rotation_bar']", "wipe['lamp_base']"]
+        }
+    }
+}
+}

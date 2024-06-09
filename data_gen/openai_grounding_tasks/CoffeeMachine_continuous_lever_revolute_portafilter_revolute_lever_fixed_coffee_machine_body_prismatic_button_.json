@@ -1,0 +1,50 @@
+{
+"CoffeeMachine": {
+    "portafilter": {
+        "rotate_portafilter": {
+            "description": "Rotate the portafilter to lock it in place.",
+            "actions": ["rotate['portafilter']"]
+        }
+    },
+    "lever": {
+        "rotate_lever": {
+            "description": "Rotate the lever to the desired position.",
+            "actions": ["rotate['lever']"]
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the button to start brewing coffee.",
+            "actions": ["press['button']"]
+        }
+    },
+    "lever(continuous)": {
+        "rotate_continuous_lever": {
+            "description": "Rotate the lever to the continuous brewing setting.",
+            "actions": ["rotate['lever']"]
+        }
+    },
+    "general": {
+        "clean_coffee_machine_body":{
+            "description": "Clean the coffee machine body to remove coffee stains and residue.",
+            "actions": ["wipe['coffee_machine_body']"]
+        },
+        "clean_lever":{
+            "description": "Clean the lever to ensure it moves smoothly.",
+            "actions": ["wipe['lever']"]
+        },
+        "clean_portafilter":{
+            "description": "Clean the portafilter to avoid buildup and maintain coffee quality.",
+            "actions": ["wipe['portafilter']"]
+        },
+        "clean_button":{
+            "description": "Clean the button to ensure proper functioning.",
+            "actions": ["wipe['button']"]
+        },
+        "clean_whole_coffee_machine":{
+            "description": "Clean the entire coffee machine including the coffee machine body, lever, portafilter, and button.",
+            "actions": ["wipe['coffee_machine_body']", "wipe['lever']", "wipe['portafilter']", "wipe['button']"]
+        }
+    }
+}
+}

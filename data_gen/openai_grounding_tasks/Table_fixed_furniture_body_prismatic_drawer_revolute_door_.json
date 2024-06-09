@@ -1,0 +1,36 @@
+{
+  "Table": {
+    "door": {
+      "clean_door": {
+        "description": "Clean the table door to remove dirt and debris.",
+        "actions": ["wipe['door']"]
+      }
+    },
+    "opened_drawer": {
+      "close_drawer": {
+        "description": "Close the drawer sliding it inside.",
+        "actions": ["slide_in['drawer']"]
+      },
+      "clean_drawer": {
+        "description": "Clean the opened drawer to remove any dirt or stains.",
+        "actions": ["wipe['drawer']"]
+      }
+    },
+    "closed_drawer": {
+      "open_drawer": {
+        "description": "Open the table drawer by sliding it out.",
+        "actions": ["slide_out['drawer']"]
+      },
+      "clean_drawer": {
+        "description": "Clean the closed drawer after sliding it out.",
+        "actions": ["slide_out['drawer']", "wipe['drawer']"]
+      }
+    },
+    "furniture_body": {
+      "clean_table": {
+        "description": "Clean the table body to remove dust or any other particles.",
+        "actions": ["wipe['furniture_body']"]
+      }
+    }
+  }
+}

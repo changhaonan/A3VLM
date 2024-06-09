@@ -1,0 +1,54 @@
+{
+"Microwave": {
+    "button": {
+        "press_button": {
+            "description": "Press the microwave button to set the timer.",
+            "actions": ["press['button']"]
+        }
+    },
+
+    "opened_door": {
+        "close_door": {
+            "description": "Close the microwave door.",
+            "actions": ["flap_close['door']"]
+        }
+    },
+
+    "closed_door": {
+        "open_door": {
+            "description": "Open the microwave door.",
+            "actions": ["flap_open['door']"]
+        },
+        "close_door": {
+            "description": "When the door is closed, no action required.",
+            "actions": ["StatusComplete"]
+        }
+    },
+
+    "knob": {
+        "turn_knob": {
+            "description": "Rotate the microwave knob to adjust the settings.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+  
+    "rotation_tray": {
+        "clean_rotation_tray": {
+            "description": "Clean the rotating tray to ensure cleanliness.",
+            "actions": ["wipe['rotation_tray']"]
+        }
+    },
+
+    "general": {
+        "clean_microwave_body":{
+            "description": "Clean the outer body of the microwave to keep it clean and shiny.",
+            "actions": ["wipe['microwave_body']"]
+        },
+
+        "clean_whole_microwave":{
+            "description": "Clean the entire microwave including the body, door, button, knob and tray.",
+            "actions": ["wipe['microwave_body']", "wipe['button']", "wipe['door']", "wipe['knob']", "wipe['rotation_tray']"]
+        }
+    }
+}
+}

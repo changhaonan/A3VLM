@@ -1,0 +1,50 @@
+{
+"Safe": {
+    "button": {
+        "activate_button": {
+            "description": "Activate the button.",
+            "actions": ["press['button']"]
+        }
+    },
+    "knob": {
+        "rotate_knob": {
+            "description": "Turn the knob in the appropriate direction to unlock the safe.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "opened_door": {
+        "secure_door": {
+            "description": "Secure the safe by swinging the door to its closed position.",
+            "actions": ["flap_close['door']"]
+         }
+    },
+    "closed_door": {
+        "access_safe": {
+            "description": "Access the interior of the safe by swinging the door open.",
+            "actions": ["flap_open['door']"] 
+        },
+        "confirm_closed": {
+            "description": "Making sure the safe door remains closed.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "general": {
+        "maintain_safe_body":{
+            "description": "Keep the safe body clean from dust or other particles.",
+            "actions": ["wipe['safe_body']"]
+        },
+        "maintain_button":{
+            "description": "Maintain the button in good condition by periodic cleaning.",
+            "actions": ["wipe['button']"]
+        },
+        "maintain_knob":{
+            "description": "Ensure the knob is clean for proper functioning.",
+            "actions": ["wipe['knob']"]
+        },
+        "clean_all":{
+            "description": "Clean the entire safe including the safe body, door, button, and knob.",
+            "actions": ["wipe['safe_body']", "wipe['button']", "wipe['knob']", "wipe['door']"]
+        }
+    }
+}
+}

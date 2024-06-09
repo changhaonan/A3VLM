@@ -101,7 +101,6 @@ class DepthControl(Dataset):
         dataset_id = item["dataset_id"]
         img_index = item["img_index"]
         depth_img_path = item[self.img_fetch_key]
-        # /mnt/petrelfs/huangsiyuan/data/partnet_pyrender_960/100782/depth_images/000035.png
         texture_description = item["texture_description"]
         depth_img = load_image(depth_img_path)
         if self.modality == "seg":

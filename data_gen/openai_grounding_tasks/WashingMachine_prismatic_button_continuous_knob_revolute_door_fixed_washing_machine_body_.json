@@ -1,0 +1,53 @@
+{
+"WashingMachine": {
+    "opened_door": {
+        "close_door": {
+            "description": "Close the washing machine door by rotating it into the closed position.",
+            "actions": ["flap_close['door']"]
+        }
+    },
+    "closed_door": {
+        "open_door": {
+            "description": "Open the washing machine door by rotating it into the open position.",
+            "actions": ["flap_open['door']"] 
+        },
+        "close_door": {
+            "description": "Keep the washing machine door in its current position.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the washing machine button to start or stop the washing cycle.",
+            "actions": ["press['button']"]
+        }
+    },
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the washing machine knob to set the desired washing program.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "general": {
+        "clean_washing_machine_body":{
+            "description": "Clean the washing machine body to maintain hygiene and enhance performance.",
+            "actions": ["wipe['washing_machine_body']"]
+        },
+
+        "clean_button":{
+            "description": "Clean the button to ensure its smooth operation and functioning.",
+            "actions": ["wipe['button']"]
+        },
+
+        "clean_knob":{
+            "description": "Clean the knob to ensure its smooth operation and functioning.",
+            "actions": ["wipe['knob']"]
+        },
+
+        "clean_whole_washing_machine":{
+            "description": "Clean the entire washing machine including its body, door, button, and knob for optimal performance.",
+            "actions": ["wipe['washing_machine_body']", "wipe['button']", "wipe['door']", "wipe['knob']"]
+        }
+    }
+}
+}

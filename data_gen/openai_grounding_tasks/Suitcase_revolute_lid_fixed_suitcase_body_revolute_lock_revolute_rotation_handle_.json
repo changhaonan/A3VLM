@@ -1,0 +1,46 @@
+{
+"Suitcase": {
+    "lock": {
+        "rotate_lock": {
+            "description": "Rotate the lock to open it.",
+            "actions": ["rotate['lock']"]
+        }
+    },
+    "rotation_handle": {
+        "rotate_handle": {
+            "description": "Rotate the handle to open or close the suitcase.",
+            "actions": ["rotate['rotation_handle']"]
+        }
+    },
+    "opened_lid": {
+        "close_lid": {
+            "description": "Close the lid by swinging it to the closed position.",
+            "actions": ["flap_close['lid']"]
+        },
+        "open_lid": {
+            "description": "The lid is already open.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "closed_lid": {
+        "open_lid": {
+            "description": "Open the lid by swinging it to the open position.",
+            "actions": ["flap_open['lid']"] 
+        },
+        "close_lid": {
+            "description": "The lid is already closed.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "general": {
+        "clean_suitcase_body":{
+            "description": "Clean the suitcase body to remove dust or any other particles.",
+            "actions": ["wipe['suitcase_body']"]
+        },
+        "clean_all":{
+            "description": "Clean the entire suitcase including the suitcase body, lid, handle, and lock.",
+            "actions": ["wipe['suitcase_body']", "wipe['lid']", "wipe['rotation_handle']", "wipe['lock']"]
+        }
+    }
+}
+}

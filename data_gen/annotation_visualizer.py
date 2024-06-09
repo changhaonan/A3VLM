@@ -214,7 +214,7 @@ def visualize_joint_3d_proj(image, annotation, save_path=None, meta_info={}):
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--vqa_task_folder", type=str, default="/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v7_0428_sd")
+    argparser.add_argument("--vqa_task_folder", type=str, default="/mnt/petrelfs/XXXXX/data/ManipVQA2/vqa_tasks_v7_0428_sd")
     argparser.add_argument("--visual_save_path", type=str, default=None)
     argparser.add_argument("--num_samples", type=int, default=200)
 

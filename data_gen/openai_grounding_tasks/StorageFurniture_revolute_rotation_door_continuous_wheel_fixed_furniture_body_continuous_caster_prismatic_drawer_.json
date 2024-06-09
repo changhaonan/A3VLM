@@ -1,0 +1,58 @@
+{
+"StorageFurniture": {
+    "rotation_door": {
+        "swipe_door": {
+            "description": "Wipe the door to clean it off dust and grime.",
+            "actions": ["wipe['rotation_door']"]
+        }
+    },
+    "opened_drawer": {
+        "close_drawer": {
+            "description": "Close the drawer by sliding it inwards.",
+            "actions": ["slide_in['opened_drawer']"] 
+        },
+        "clean_drawer": {
+            "description": "Clean the inside of the drawer.",
+            "actions": ["wipe['opened_drawer']"] 
+        }
+    },
+    "closed_drawer": {
+        "open_drawer": {
+            "description": "Open the drawer by sliding it outwards.",
+            "actions": ["slide_out['closed_drawer']"]
+        },
+        "closed_drawer_task": {
+            "description": "Keep the current state of the drawer.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "caster": {
+        "rotate_caster": {
+            "description": "Rotate the caster wheel to ease the movement.",
+            "actions": ["rotate['caster']"]
+        }
+    },
+    "wheel": {
+        "rotate_wheel": {
+            "description": "Rotate the wheel to move the furniture.",
+            "actions": ["rotate['wheel']"]
+        }
+    },
+    "furniture_body": {
+        "clean_body":{
+            "description": "Clean the main body of the furniture to maintain its appearance.",
+            "actions": ["wipe['furniture_body']"]
+        }
+    },
+    "general": {
+        "clean_complete_furniture":{
+            "description": "Clean the complete furniture including its disposable parts.",
+            "actions": ["wipe['furniture_body']", "wipe['rotation_door']", "wipe['opened_drawer']", "wipe['closed_drawer']", "wipe['caster']", "wipe['wheel']"]
+        },
+        "move_furniture":{
+            "description": "Move the furniture using its caster wheels or wheels.",
+            "actions": ["rotate['caster']", "rotate['wheel']"]
+        }
+    }
+ }
+}

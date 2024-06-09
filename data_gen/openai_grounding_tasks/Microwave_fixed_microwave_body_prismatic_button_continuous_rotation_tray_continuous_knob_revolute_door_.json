@@ -1,0 +1,54 @@
+{
+"Microwave": {
+    "opened_door": {
+        "close_door": {
+            "description": "Close the microwave door.",
+            "actions": ["flap_close['door']"]
+        }
+    },
+    "closed_door": {
+        "open_door": {
+            "description": "Open the microwave door.",
+            "actions": ["flap_open['door']"]
+        },
+        "keep_door_closed": {
+            "description": "Keep the microwave door closed.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "button": {
+        "press_button": {
+            "description": "Press the button to operate the microwave.",
+            "actions": ["press['button']"]
+        }
+    },
+    "knob": {
+        "rotate_knob": {
+            "description": "Rotate the knob to set the timer or heat level.",
+            "actions": ["rotate['knob']"]
+        }
+    },
+    "rotation_tray": {
+        "rotate_tray": {
+            "description": "The tray rotates automatically when the microwave is in operation.",
+            "actions": ["StatusComplete"]
+        }
+    },
+    "microwave_body": {
+        "clean_microwave_body" : {
+            "description": "Clean the outside body of the microwave.",
+            "actions": ["wipe['microwave_body']"]
+        },
+        "clean_inside_microwave" : {
+            "description": "Clean the inside of the microwave, including the tray.",
+            "actions": ["wipe['rotation_tray']"]
+        }
+    },
+    "general": {
+      "clean_whole_microwave":{
+         "description": "Clean whole microwave, outside and inside, and all controllable parts.",
+         "actions": ["wipe['microwave_body']", "wipe['rotation_tray']", "wipe['button']", "wipe['knob']", "wipe['door']"]
+      }
+    }
+  }
+}

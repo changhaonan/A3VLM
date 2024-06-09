@@ -1,0 +1,40 @@
+{
+  "Remote": {
+    "button": {
+      "press_button": {
+        "description": "Press the button on the remote.",
+        "actions": ["press['button']"]
+      },
+      "clean_button": {
+        "description": "Clean the button on the remote to ensure proper functionality.",
+        "actions": ["wipe['button']"]
+      }
+    },
+    "knob": {
+      "rotate_knob": {
+        "description": "Rotate the knob on the remote for adjustment.",
+        "actions": ["rotate['knob']"]
+      },
+      "clean_knob": {
+        "description": "Clean the knob on the remote to ensure smooth rotation.",
+        "actions": ["wipe['knob']"]
+      }
+    },
+    "remote_base": {
+      "clean_remote_base": {
+        "description": "Clean the base of the remote to get rid of dust and debris.",
+        "actions": ["wipe['remote_base']"]
+      }
+    },
+    "general": {
+      "full_cleaning": {
+        "description": "Overall cleaning of the remote including button, knob, and base.",
+        "actions": ["wipe['button']", "wipe['knob']", "wipe['remote_base']"]
+      },
+      "button_knob_interaction": {
+        "description": "Press the button and rotate the knob on the remote successively.",
+        "actions": ["press['button']", "rotate['knob']"]
+      }
+    }
+  }
+}

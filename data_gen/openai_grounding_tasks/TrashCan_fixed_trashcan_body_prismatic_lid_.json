@@ -1,0 +1,38 @@
+{
+"TrashCan": {
+    "opened_lid": {
+
+    "close_lid": {
+        "description": "Close the lid of trashcan by sliding it to the closed position.",
+        "actions": ["slide_close['lid']"]
+      }
+        
+    },
+    "closed_lid": {
+        "open_lid": {
+            "description": "Open the lid of trashcan by sliding it to the open position.",
+            "actions": ["slide_open['lid']"] 
+        },
+
+        "close_lid": {
+            "description": "Close the lid of trashcan.",
+            "actions": ["StatusComplete"] 
+        }
+
+    },
+    "general": {
+        "clean_trashcan_body" : {
+            "description": "Clean the body of trashcan to remove dirt, grime, and trash residues.",
+            "actions": ["wipe['trashcan_body']"]
+        },
+        "clean_whole_trashcan" : {
+            "description": "Clean the complete trashcan including the body and lid.",
+            "actions": ["wipe['trashcan_body']", "slide_open['lid']", "wipe['lid']", "slide_close['lid']"]
+        },
+        "empty_trashcan" : {
+            "description": "Empty the entire trashcan.",
+            "actions": ["slide_open['lid']", "pick['trash']", "place['dumpster']", "slide_close['lid']"]
+        }
+    }
+}
+}

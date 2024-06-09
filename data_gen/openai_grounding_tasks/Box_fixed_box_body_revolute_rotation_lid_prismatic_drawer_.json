@@ -1,0 +1,40 @@
+{
+    "Box": {
+        "opened_rotation_lid": {
+            "close_rotation_lid": {
+                "description": "Close the box lid by rotating it to the closed position.",
+                "actions": ["flap_close['rotation_lid']"]
+            }
+        },
+        "closed_rotation_lid": {
+            "open_rotation_lid": {
+                "description": "Open the box lid by rotating it to the open position.",
+                "actions": ["flap_open['rotation_lid']"]
+            },
+            "closed_rotation_lid": {
+                "description": "The Box lid is already in the closed position.",
+                "actions": ["StatusComplete"]
+            }
+        },
+        "drawer": {
+            "press_drawer": {
+                "description": "Press the drawer to reveal its items.",
+                "actions": ["press['drawer']"]
+            }
+        },
+        "general": {
+            "clean_box": {
+                "description": "Clean the entire box: body, lid and drawer.",
+                "actions": ["wipe['box_body']", "wipe['rotation_lid']", "wipe['drawer']"]
+            },
+            "clean_drawer": {
+                "description": "Clean the drawer of the box.",
+                "actions": ["wipe['drawer']"]
+            },
+            "clean_lid": {
+                "description": "Clean the lid of the box.",
+                "actions": ["wipe['rotation_lid']"]
+            }
+        }
+    }
+}

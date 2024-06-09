@@ -1,0 +1,30 @@
+{
+"Toaster": {
+    "button": {
+        "press_toaster_button": {
+            "description": "Press the toaster button to start toasting.",
+            "actions": ["press['button']"]
+        },
+        "clean_toaster_button": {
+            "description": "Clean the toaster button to ensure it remains hygienic.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "toaster_body": { 
+      "clean_toaster_body": {
+            "description": "Clean the toaster body to remove any dust or debris..",
+            "actions": ["wipe['toaster_body']"]
+        }
+    },
+    "general": {
+       "clean_whole_toaster": {
+            "description": "Clean the entire toaster including the button and body.",
+            "actions": ["wipe['button']", "wipe['toaster_body']"]
+        },
+       "prepare_toast": {
+           "description": "Press the button to start preparing the toast.",
+           "actions": ["press['button']", "StatusComplete"]
+        }
+    }
+}
+}

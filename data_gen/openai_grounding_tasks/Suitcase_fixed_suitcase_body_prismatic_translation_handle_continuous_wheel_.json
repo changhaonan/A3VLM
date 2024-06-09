@@ -1,0 +1,36 @@
+{
+"Suitcase": {
+    "translation_handle": {
+        "clean_handle": {
+            "description": "Clean the suitcase handle to keep it clean and germ-free.",
+            "actions": ["wipe['translation_handle']"]
+        },
+        "rotate_handle_position": {
+            "description": "Rotate the suitcase handle for convenient pulling.",
+            "actions": ["rotate['translation_handle']"]
+        }
+    },
+    "wheel": {
+        "clean_wheel": {
+            "description": "Clean the suitcase wheel to wipe off dust and dirt.",
+            "actions": ["wipe['wheel']"]
+        },
+        "rotate_wheel": {
+            "description": "Rotate the suitcase wheel for maintenance check.",
+            "actions": ["rotate['wheel']"]
+        }
+    },
+    "suitcase_body": {
+        "clean_suitcase": {
+            "description": "Clean the suitcase body to keep it clean and maintain the colour.",
+            "actions": ["wipe['suitcase_body']"]
+        }
+    },
+    "general": {
+        "clean_whole_suitcase":{
+            "description": "Clean the entire suitcase including the suitcase body, wheels, and handle.",
+            "actions": ["wipe['suitcase_body']", "wipe['translation_handle']", "wipe['wheel']"]
+        }
+    }
+  }
+}

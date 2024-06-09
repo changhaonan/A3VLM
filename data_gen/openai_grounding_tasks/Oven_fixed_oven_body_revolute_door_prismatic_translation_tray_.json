@@ -1,0 +1,48 @@
+{
+"Oven": {
+    "translation_tray": {
+        "remove_tray": {
+            "description": "Slide out the oven tray from the oven.",
+            "actions": ["slide_out['translation_tray']"]
+        },
+        "insert_tray": {
+            "description": "Slide in the oven tray into the oven.",
+            "actions": ["slide_in['translation_tray']"]
+        }
+    },
+    "opened_door": {
+        "close_door": {
+            "description": "Close the oven's door by swinging it to the closed position.",
+            "actions": ["flap_close['door']"]
+        }
+    },
+    "closed_door": {
+        "open_door": {
+            "description": "Open the oven's door by swinging it to open position.",
+            "actions": ["flap_open['door']"] 
+        },
+        "close_door": {
+            "description": "The oven door remains closed.",
+            "actions": ["StatusComplete"] 
+        }
+    },
+    "general": {
+        "clean_oven_body":{
+            "description": "Clean the oven body to remove dust or any other particles.",
+            "actions": ["wipe['oven_body']"]
+        },
+        "clean_oven_door":{
+            "description": "Clean the oven door to ensure clear visibility.",
+            "actions": ["wipe['door']"]
+        },
+        "clean_tray":{
+            "description": "Clean the oven tray to remove any food particles.",
+            "actions": ["wipe['translation_tray']"]
+        },
+        "cleanup_oven":{
+            "description": "Clean the entire oven including the oven body, oven door, and oven tray.",
+            "actions": ["wipe['oven_body']", "wipe['door']", "wipe['translation_tray']"]
+        }
+    }
+}
+}

@@ -1,0 +1,44 @@
+{
+"Toaster": {
+    "button": {
+        "press_button": {
+            "description": "Press the button to initialize the toaster.",
+            "actions": ["press['button']"]
+        },
+        "clean_button":{
+            "description": "Clean the button to ensure proper functioning.",
+            "actions": ["wipe['button']"]
+        }
+    },
+    "slider": {
+        "move_slider": {
+            "description": "Move the slider to set the desired toast shade.",
+            "actions": ["slide_in['slider']", "slide_out['slider']"]
+        },
+        "clean_slider":{
+            "description": "Clean the slider to ensure free movement.",
+            "actions": ["wipe['slider']"]
+        }
+    },
+    "toaster_body": {
+        "clean_toaster_body": {
+            "description": "Clean the toaster body to remove any dust or debris.",
+            "actions": ["wipe['toaster_body']"]
+        }
+    },
+    "general": {
+        "clean_whole_toaster": {
+            "description": "Clean the entire toaster, including the body, slider, and button.",
+            "actions": ["wipe['toaster_body']", "wipe['slider']", "wipe['button']"]
+        },
+        "initialize_toaster": {
+            "description": "Initialize the toaster by pressing the button and then setting the toast shade via the slider.",
+            "actions": ["press['button']", "slide_in['slider']"]
+        },
+        "reset_toaster": {
+            "description": "Reset the toaster by moving the slider back.",
+            "actions": ["slide_out['slider']", "StatusComplete"]
+        }
+    }
+}
+}

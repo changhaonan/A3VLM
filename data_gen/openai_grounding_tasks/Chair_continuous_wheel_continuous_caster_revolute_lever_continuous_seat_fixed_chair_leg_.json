@@ -1,0 +1,279 @@
+{
+    "Chair": {
+        "lever": {
+            "turn_lever": {
+                "description": "Turn the lever of the chair.",
+                "actions": [
+                    "rotate['lever']"
+                ]
+            },
+            "clean_lever_surface": {
+                "description": "Thoroughly clean the surface of the chair's lever.",
+                "actions": [
+                    "wipe['lever']"
+                ]
+            },
+            "rotate_lever_clockwise": {
+                "description": "Rotate the lever in a clockwise direction.",
+                "actions": [
+                    "rotate['lever']"
+                ]
+            },
+            "rotate_lever_anticlockwise": {
+                "description": "Rotate the lever in an anticlockwise direction.",
+                "actions": [
+                    "rotate['lever']"
+                ]
+            },
+            "rotate_lever_inverse": {
+                "description": "Rotate the lever in the opposite direction.",
+                "actions": [
+                    "rotate['lever']"
+                ]
+            },
+            "rotate_lever": {
+                "description": "Rotate the lever.",
+                "actions": [
+                    "rotate['lever']"
+                ]
+            },
+            "clean_lever": {
+                "description": "Clean the lever to ensure smooth operation.",
+                "actions": [
+                    "wipe['lever']"
+                ]
+            }
+        },
+        "caster": {
+            "rotate_caster_fast": {
+                "description": "Rotate the chair's caster at a fast pace.",
+                "actions": [
+                    "rotate['caster']"
+                ]
+            },
+            "clean_caster_surface": {
+                "description": "Thoroughly clean the surface of the chair's caster.",
+                "actions": [
+                    "wipe['caster']"
+                ]
+            },
+            "rotate_caster_clockwise": {
+                "description": "Rotate the caster in a clockwise direction.",
+                "actions": [
+                    "rotate['caster']"
+                ]
+            },
+            "rotate_caster_anticlockwise": {
+                "description": "Rotate the caster in an anticlockwise direction.",
+                "actions": [
+                    "rotate['caster']"
+                ]
+            },
+            "spin_caster_faster": {
+                "description": "Spin the caster at a faster speed.",
+                "actions": [
+                    "rotate['caster']"
+                ]
+            },
+            "spin_caster": {
+                "description": "Spin the caster.",
+                "actions": [
+                    "rotate['caster']"
+                ]
+            },
+            "clean_caster": {
+                "description": "Clean the caster to ensure smooth operation.",
+                "actions": [
+                    "wipe['caster']"
+                ]
+            }
+        },
+        "wheel": {
+            "rotate_wheel_slow": {
+                "description": "Rotate the chair's wheel at a slow pace.",
+                "actions": [
+                    "rotate['wheel']"
+                ]
+            },
+            "clean_wheel_surface": {
+                "description": "Thoroughly clean the surface of the chair's wheel.",
+                "actions": [
+                    "wipe['wheel']"
+                ]
+            },
+            "rotate_wheel_clockwise": {
+                "description": "Rotate the wheel in a clockwise direction.",
+                "actions": [
+                    "rotate['wheel']"
+                ]
+            },
+            "rotate_wheel_anticlockwise": {
+                "description": "Rotate the wheel in an anticlockwise direction.",
+                "actions": [
+                    "rotate['wheel']"
+                ]
+            },
+            "spin_wheel_faster": {
+                "description": "Spin the wheel of the chair at a faster speed.",
+                "actions": [
+                    "rotate['wheel']"
+                ]
+            },
+            "spin_wheel_slower": {
+                "description": "Spin the wheel of the chair at a slower speed.",
+                "actions": [
+                    "rotate['wheel']"
+                ]
+            },
+            "spin_wheel": {
+                "description": "Spin the wheel of the chair.",
+                "actions": [
+                    "rotate['wheel']"
+                ]
+            },
+            "clean_wheel": {
+                "description": "Clean the wheels of the chair to ensure smooth operation.",
+                "actions": [
+                    "wipe['wheel']"
+                ]
+            }
+        },
+        "seat": {
+            "wipe_seat_clean": {
+                "description": "Wipe the seat of the chair to clean it.",
+                "actions": [
+                    "wipe['seat']"
+                ]
+            },
+            "wipe_seat_once": {
+                "description": "Clean the seat of the chair once.",
+                "actions": [
+                    "wipe['seat']"
+                ]
+            },
+            "wipe_seat_thrice": {
+                "description": "Clean the seat of the chair thrice.",
+                "actions": [
+                    "wipe['seat']",
+                    "wipe['seat']",
+                    "wipe['seat']"
+                ]
+            },
+            "wipe_seat_twice": {
+                "description": "Clean the seat of the chair twice.",
+                "actions": [
+                    "wipe['seat']",
+                    "wipe['seat']"
+                ]
+            },
+            "clean_seat": {
+                "description": "Clean the seat of the chair.",
+                "actions": [
+                    "wipe['seat']"
+                ]
+            }
+        },
+        "chair_leg": {
+            "swipe_leg_clean": {
+                "description": "Swipe the leg of the chair to clean it up.",
+                "actions": [
+                    "wipe['chair_leg']"
+                ]
+            },
+            "wipe_leg_once": {
+                "description": "Clean the leg of the chair once.",
+                "actions": [
+                    "wipe['chair_leg']"
+                ]
+            },
+            "wipe_leg_thrice": {
+                "description": "Clean the leg of the chair thrice.",
+                "actions": [
+                    "wipe['chair_leg']",
+                    "wipe['chair_leg']",
+                    "wipe['chair_leg']"
+                ]
+            },
+            "wipe_leg_twice": {
+                "description": "Clean the leg of the chair twice.",
+                "actions": [
+                    "wipe['chair_leg']",
+                    "wipe['chair_leg']"
+                ]
+            },
+            "clean_leg": {
+                "description": "Clean the leg of the chair.",
+                "actions": [
+                    "wipe['chair_leg']"
+                ]
+            }
+        },
+        "general": {
+            "clean_chair": {
+                "description": "Perform a general cleaning of the chair, touching all accessible parts.",
+                "actions": [
+                    "wipe['lever']",
+                    "wipe['caster']",
+                    "wipe['wheel']",
+                    "wipe['seat']",
+                    "wipe['chair_leg']"
+                ]
+            },
+            "clean_whole_chair_once": {
+                "description": "Clean the entire chair including the lever, caster, wheel, seat, and chair leg once.",
+                "actions": [
+                    "wipe['lever']",
+                    "wipe['caster']",
+                    "wipe['wheel']",
+                    "wipe['seat']",
+                    "wipe['chair_leg']"
+                ]
+            },
+            "clean_whole_chair_thrice": {
+                "description": "Clean the entire chair including the lever, caster, wheel, seat, and chair leg thrice.",
+                "actions": [
+                    "wipe['lever']",
+                    "wipe['caster']",
+                    "wipe['wheel']",
+                    "wipe['seat']",
+                    "wipe['chair_leg']",
+                    "wipe['lever']",
+                    "wipe['caster']",
+                    "wipe['wheel']",
+                    "wipe['seat']",
+                    "wipe['chair_leg']",
+                    "wipe['lever']",
+                    "wipe['caster']",
+                    "wipe['wheel']",
+                    "wipe['seat']",
+                    "wipe['chair_leg']"
+                ]
+            },
+            "clean_whole_chair_twice": {
+                "description": "Clean the entire chair including the lever, caster, wheel, seat, and chair leg twice.",
+                "actions": [
+                    "wipe['lever']",
+                    "wipe['caster']",
+                    "wipe['wheel']",
+                    "wipe['seat']",
+                    "wipe['chair_leg']",
+                    "wipe['lever']",
+                    "wipe['caster']",
+                    "wipe['wheel']",
+                    "wipe['seat']",
+                    "wipe['chair_leg']"
+                ]
+            },
+            "clean_whole_chair": {
+                "description": "Clean the entire chair including the lever, caster, wheel, seat, and chair leg.",
+                "actions": [
+                    "wipe['lever']",
+                    "wipe['caster']",
+                    "wipe['wheel']",
+                    "wipe['seat']",
+                    "wipe['chair_leg']"
+                ]
+            }
+        }
+    }
+}
