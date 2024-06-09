@@ -1,0 +1,149 @@
+I would like to add grounding tasks to the objects' link part. The task should involove single step or small number of steps (maybe involing some links). To fullfil the tasks, you should select one to more action primitives from robot skill libray: ["slide_open", "slide_close", "flap_open", "flap_close", "cap", "uncap", "pick", "place", "slide_in", "slide_out", "wipe", "press", "rotate", "StatusComplete"]. When generating tasks and actions, you should consider the following constraints:
+
+1. The link could be in different status, e.g. closed_seat, or open_seat of a toilet. Generate the tasks and actions based on the status of the link separately.
+
+2. The link could have different joint types, including prismatic, revolute, static, etc. And no action should be applied to the static joint type.
+
+3. The action should only come from the skill library.
+
+4. The manipulation should only involve the given links in the object's link part.
+
+5. The output should be a list of tasks and actions and represtented in the json format.
+
+6. The generated actions should vary in the sequence length, order, and semantics. And you should generate the tasks both involving single link and multiple links (if applible).
+
+7. You should only output the desired json format.
+
+8. DO NOT imagine additional object system or parts when not specified.
+
+9. When joint status is N.A., you should NOT apply any  action like "slide", "flap", "cap", "rotate" which requires the joint to be in a certain status.
+
+10. The link name in the action-link pair should be in the format of "action['link']" where no opened status should occur.
+
+The following is an example of the Door's link part:
+
+```json
+{
+  "links": [
+    {
+      "name": "door_frame",
+      "joint_type": "fixed",
+      "status": "N.A."
+    },
+    {
+      "name": "closed_rotation_door",
+      "status": "closed",
+      "joint_type": "revolute"
+    },
+    {
+      "name": "opened_rotation_door",
+      "status": "opened",
+      "joint_type": "revolute"
+    }
+  ]
+}
+```
+
+Analysis:
+The Door has 2 distinct links, door_frame, and rotation_door.  For the fixed door_frame, we can only apply the action "swipe". For the door, we can apply the action "flap_open" and "flap_close".
+Moreover, the door could have closed and opened status, and we can assign the action "flap_open" and "flap_close" to the door based on its status.
+
+
+The partly generated tasks and actions should be like:
+
+{
+"Door": {
+    "opened_rotation_door": {
+
+    "close_rotation_door": {
+        "description": "Close the rotation door by swinging it on its hinge to the closed position.",
+        "actions": [Flap_close['rotation_door']]
+      }
+        
+    },
+    "closed_rotation_door": {
+        "open_rotation_door": {
+            "description": "Close the rotation door by swinging it on its hinge.",
+            "actions": [Flap_open['rotation_door']] 
+        },
+
+        "close_rotation_door": {
+            "description": "Open the rotation door by swinging it on its hinge.",
+            "actions": [StatusComplete] 
+        },
+
+    },
+    "general": {
+        "clean_door_frame" : {
+            "description": "Clean the door frame to remove dirt and debris.",
+            "actions": [Wipe['door_frame']],
+        },
+        "clean_whole_door" : {
+            "description": "Clean the whole door to remove dirt and debris.",
+            "actions": [Wipe['door_frame'], Wipe['rotation_door']],
+        },
+    }
+}
+}
+
+Second example for the Safe class:
+
+```json
+{
+  links: [
+{'name': 'button', 'joint_type': 'prismatic', 'status': 'N.A.'}, 
+{'name': 'safe_body', 'joint_type': 'fixed', 'status': 'N.A.'}, 
+{'name': 'opened_door', 'joint_type': 'revolute', 'status': 'open'}, 
+{'name': 'closed_door', 'joint_type': 'revolute', 'status': 'close'}
+  ]
+}
+
+```
+Analysis:
+The safe has 3 distinct links, button, safe_body, and door. The button is a prismatic joint and in N.A. status. Thus, we can only apply the action "press" and "swipe". For the fixed safe_body, we can only apply the action "swipe". For the door, we can apply the action "flap_open" and "flap_close".
+Moreover, the door could have closed and opened status, and we can assign the action "flap_open" and "flap_close" to the door based on its status.
+
+{
+"Safe": {
+    "button": {
+        "press_button": {
+            "description": "Press the button.",
+            "actions": ["press['button']"]
+        },
+    },
+    "opened_door": {
+        "close_door": {
+            "description": "Close the rotation door by swinging it on its hinge to the closed position.",
+            "actions": [Flap_close['door']]
+        }
+    },
+    "closed_door": {
+        "open_door": {
+            "description": "Close the rotation door by swinging it on its hinge.",
+            "actions": [Flap_open['door']] 
+        },
+        "close_door": {
+            "description": "Open the rotation door by swinging it on its hinge.",
+            "actions": [StatusComplete] 
+        },
+    },
+    "general": {
+        "clean_safe_body":{
+            "description": "Clean the safe body to remove dust or any other particles.",
+            "actions": ["wipe['safe_body']"]
+        },
+
+        "clean_button":{
+            "description": "Clean the button to ensure proper functioning.",
+            "actions": ["wipe['button']"]
+        },
+        "clean_whole_safe":{
+            "description": "Clean the entire safe including the safe body, door, and button.",
+            "actions": ["wipe['safe_body']", "wipe['button']", wipe['door']]
+        }
+    }
+}
+}
+
+Now please generate the tasks and actions for the {OBJECT_CLASS}'s link part with the links {LINK_INFO}. Note You have generated tasks and actions in the previous as following {HISTORY_GENERATION}, please make sure the tasks and actions are different from the previous ones.
+Please ONLY generate the tasks and actions in the valid json format.
