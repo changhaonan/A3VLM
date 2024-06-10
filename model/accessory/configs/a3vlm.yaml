@@ -1,0 +1,40 @@
+META:
+  - 
+    path: '/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v17_525_3d_full_size_sd/all_parts_3d_det_tasks_train_53087.json'
+    type: 'image_depth_text'
+    ratio: 0.2
+   
+  - 
+    path: '/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v17_525_3d_full_size_sd/grounding_3d_tasks_train_11236_filtered.json'
+    type: 'image_depth_text' 
+    ratio: 0.2
+
+  - 
+    path: '/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v17_525_3d_full_size_sd/joint_3d_rec_tasks_train_186177.json'
+    type: 'image_depth_text'
+    ratio: 0.2
+  - 
+    path: '/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v17_525_3d_full_size_sd/single_link_3d_rec_tasks_train_186177.json'
+    type: 'image_depth_text'
+    ratio: 0.2
+
+# PartNet
+  - 
+    path: '/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v17_525_3d_full_size/all_parts_3d_det_tasks_train_53341.json'
+    type: 'image_depth_text'
+    ratio: 1
+   
+  - 
+    path: '/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v17_525_3d_full_size/grounding_3d_tasks_train_10389_filtered.json'
+    type: 'image_depth_text' 
+    ratio: 1
+
+  - 
+    path: '/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v17_525_3d_full_size/joint_3d_rec_tasks_train_194391.json'
+    type: 'image_depth_text'
+    ratio: 1
+
+  - 
+    path: '/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v17_525_3d_full_size/single_link_3d_rec_tasks_train_194391.json'
+    type: 'image_depth_text'
+    ratio: 1
