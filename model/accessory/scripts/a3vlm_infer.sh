@@ -2,11 +2,11 @@ remove_space=True
 pretrained_path=PATH_TO_PRETRAIN
 addition_flag=affordance_v6_rgb_8points_wo_unseen
 
-export TRANSFORMERS_CACHE=/mnt/petrelfs/huangsiyuan/.cache/huggingface
-export HF_HOME=/mnt/petrelfs/huangsiyuan/.cache/huggingface
+export TRANSFORMERS_CACHE=/mnt/petrelfs/XXXXX/.cache/huggingface
+export HF_HOME=/mnt/petrelfs/XXXXX/.cache/huggingface
 export HF_HUB_OFFLINE=1
-export TORCH_HOME=/mnt/petrelfs/huangsiyuan/.cache/torch
-export LD_LIBRARY_PATH=/mnt/petrelfs/huangsiyuan/anaconda3/envs/accessory/lib
+export TORCH_HOME=/mnt/petrelfs/XXXXX/.cache/torch
+export LD_LIBRARY_PATH=/mnt/petrelfs/XXXXX/anaconda3/envs/accessory/lib
 
 
 while true
@@ -23,7 +23,7 @@ export MASTER_PORT=$PORT
 MODEL=llama_ens5 
 config=resample_args_query.json
 
-llama_path="/mnt/petrelfs/huangsiyuan/data/llama2"
+llama_path="/mnt/petrelfs/XXXXX/data/llama2"
 llama_config="$llama_path"/13B/params.json
 tokenizer_path=$PATH_TO_PRETRAIN/tokenizer.model
 
