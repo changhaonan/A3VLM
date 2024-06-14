@@ -1,9 +1,9 @@
 #!/bin/bash
-export TRANSFORMERS_CACHE=/mnt/petrelfs/huangsiyuan/.cache/huggingface
-export HF_HOME=/mnt/petrelfs/huangsiyuan/.cache/huggingface
+export TRANSFORMERS_CACHE=/mnt/petrelfs/XXXXX/.cache/huggingface
+export HF_HOME=/mnt/petrelfs/XXXXX/.cache/huggingface
 export HF_HUB_OFFLINE=1
-export TORCH_HOME=/mnt/petrelfs/huangsiyuan/.cache/torch
-export LD_LIBRARY_PATH=/mnt/petrelfs/huangsiyuan/anaconda3/envs/accessory/lib
+export TORCH_HOME=/mnt/petrelfs/XXXXX/.cache/torch
+export LD_LIBRARY_PATH=/mnt/petrelfs/XXXXX/anaconda3/envs/accessory/lib
 
 export PATH=/mnt/lustre/share/cuda-11.8/bin:$PATH
 export LD_LIBRARY_PATH=/mnt/lustre/share/cuda-11.8/lib64:$LD_LIBRARY_PATH

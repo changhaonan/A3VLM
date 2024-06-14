@@ -50,21 +50,21 @@ global_config = {
     'top_p': 0.75
 }
 
-partnet_dataset_root = '/mnt/petrelfs/huangsiyuan/data/ManipVQA2/jsons_vqa_tasks_fix_angle/'
-partnet_dataset_root_depth = "/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v11_0508"
-partnet_dataset_root_8points = "/mnt/petrelfs/huangsiyuan/data/ManipVQA2/vqa_tasks_v15_521_3d"
+partnet_dataset_root = '/mnt/petrelfs/XXXXX/data/ManipVQA2/jsons_vqa_tasks_fix_angle/'
+partnet_dataset_root_depth = "/mnt/petrelfs/XXXXX/data/ManipVQA2/vqa_tasks_v11_0508"
+partnet_dataset_root_8points = "/mnt/petrelfs/XXXXX/data/ManipVQA2/vqa_tasks_v15_521_3d"
 
 ds_collections = {
     "demo": {
-        "train": "/mnt/petrelfs/huangsiyuan/data/ManipVQA2/eval_demo/demo_det_all.json",
-        "test": "/mnt/petrelfs/huangsiyuan/data/ManipVQA2/eval_demo/demo_det_all.json",
+        "train": "/mnt/petrelfs/XXXXX/data/ManipVQA2/eval_demo/demo_det_all.json",
+        "test": "/mnt/petrelfs/XXXXX/data/ManipVQA2/eval_demo/demo_det_all.json",
         "max_new_tokens": 2048,
         "use_answer_extractor": True,
     },
     
     "demo2": {
-       "train": "/mnt/petrelfs/huangsiyuan/data/ManipVQA2/eval_demo/demo_joint_rec.json",
-        "test": "/mnt/petrelfs/huangsiyuan/data/ManipVQA2/eval_demo/demo_joint_rec.json",
+       "train": "/mnt/petrelfs/XXXXX/data/ManipVQA2/eval_demo/demo_joint_rec.json",
+        "test": "/mnt/petrelfs/XXXXX/data/ManipVQA2/eval_demo/demo_joint_rec.json",
         "max_new_tokens": 1024,
         "use_answer_extractor": True,
     }
