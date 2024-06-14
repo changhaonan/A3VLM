@@ -20,3 +20,7 @@ If you want to reproduce the reported performance, you need:
 3. Create a VQA Json to include your tasks and update the json path in 'eval_affordance_v2.py'
 4. Run the shell!
 
+## Inference with Quant
+
+If you have limited GPU memory, please check the 'eval_affordance_with_quant.py'
+
