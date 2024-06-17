@@ -1,11 +1,14 @@
 import cv2
+import random
 import numpy as np
 from shapely.geometry import Polygon
 from shapely.affinity import rotate, translate
+from shapely.geometry import MultiPoint
+from scipy.spatial.transform import Rotation as R
 
-import random
-import cv2
-import numpy as np
+
+####################################### Constants #######################################
+eps = 1e-6
 
 colors = {
     "red": (0, 0, 255),
@@ -26,6 +29,28 @@ colors = {
     "brown": (19, 69, 139),
     "pink": (147, 20, 255),
 }
+
+colors_hex = [
+    "#FF0000",  # Red
+    "#FF7F00",  # Orange
+    "#FFFF00",  # Yellow
+    "#7FFF00",  # Chartreuse Green
+    "#00FF00",  # Green
+    "#00FF7F",  # Spring Green
+    "#00FFFF",  # Cyan
+    "#007FFF",  # Azure
+    "#0000FF",  # Blue
+    "#7F00FF",  # Violet
+    "#FF00FF",  # Magenta
+    "#FF007F",  # Rose
+    "#7F3F00",  # Chocolate
+    "#007F3F",  # Teal
+    "#3F007F",  # Indigo
+    "#7F007F",  # Purple
+    "#7F0000",  # Maroon
+    "#003F7F",  # Navy
+    "#000000",
+]
 
 
 def get_rotated_box(cx, cy, w, h, angle):
@@ -142,7 +167,7 @@ def convert_depth_to_color(depth_img, maintain_ratio=False):
     return color
 
 
-########################################### 3D Utils ###########################################
+####################################### 3D Utils ########################################
 def read_ply_ascii(filename):
     with open(filename) as f:
         # Check if the file starts with ply
@@ -165,24 +190,195 @@ def read_ply_ascii(filename):
     return data
 
 
-colors_hex = [
-    "#FF0000",  # Red
-    "#FF7F00",  # Orange
-    "#FFFF00",  # Yellow
-    "#7FFF00",  # Chartreuse Green
-    "#00FF00",  # Green
-    "#00FF7F",  # Spring Green
-    "#00FFFF",  # Cyan
-    "#007FFF",  # Azure
-    "#0000FF",  # Blue
-    "#7F00FF",  # Violet
-    "#FF00FF",  # Magenta
-    "#FF007F",  # Rose
-    "#7F3F00",  # Chocolate
-    "#007F3F",  # Teal
-    "#3F007F",  # Indigo
-    "#7F007F",  # Purple
-    "#7F0000",  # Maroon
-    "#003F7F",  # Navy
-    "#000000",
-]
+def farthest_point_sample(point, npoint):
+    """
+    Input:
+        xyz: pointcloud data, [N, D]
+        npoint: number of samples
+    Return:
+        centroids: sampled pointcloud index, [npoint, D]
+    """
+    N, D = point.shape
+    xyz = point[:, :3]
+    centroids = np.zeros((npoint,))
+    distance = np.ones((N,)) * 1e10
+    farthest = np.random.randint(0, N)
+    for i in range(npoint):
+        centroids[i] = farthest
+        centroid = xyz[farthest, :]
+        dist = np.sum((xyz - centroid) ** 2, -1)
+        mask = dist < distance
+        distance[mask] = dist[mask]
+        farthest = np.argmax(distance, -1)
+    point = point[centroids.astype(np.int32)]
+    return point
+
+
+####################################### 3D Structure ########################################
+class BBox3D:
+    """3D bounding box tool."""
+
+    def __init__(self, center=None, extent=None, rot_vec=None) -> None:
+        self.extent = np.ones(3) if extent is None else np.array(extent)
+        self.center = np.zeros(3) if center is None else np.array(center)
+        self.R = np.eye(3) if rot_vec is None else R.from_rotvec(rot_vec).as_matrix()
+
+    def create_axis_aligned_from_points(self, points):
+        min_bound = np.min(points, axis=0)
+        max_bound = np.max(points, axis=0)
+        self.center = (min_bound + max_bound) / 2
+        self.extent = max_bound - min_bound
+        self.R = np.eye(3)
+
+    def create_minimum_axis_aligned_bbox(self, points):
+        import open3d as o3d
+
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(points)
+        obb = pcd.get_minimal_oriented_bounding_box()
+        self.center = np.asarray(obb.center)
+        self.extent = np.asarray(obb.extent)
+        self.R = np.asarray(obb.R)
+
+    def create_minimum_projected_bbox(self, points):
+        points_xy = points[:, :2]
+        # Minimum bounding box in 2D
+        multipoint = MultiPoint(points_xy)
+        min_rect = multipoint.minimum_rotated_rectangle
+        rect_coords = list(min_rect.exterior.coords)
+        rect_coords = np.array(rect_coords)[:, :2]
+        edges = [rect_coords[i + 1] - rect_coords[i] for i in range(len(rect_coords) - 1)]
+        longest_edge = max(edges, key=lambda x: np.linalg.norm(x))  # Use this as x-axis
+        shortest_edge = min(edges, key=lambda x: np.linalg.norm(x))
+        longest_edge_len = np.linalg.norm(longest_edge)
+        shortest_edge_len = np.linalg.norm(shortest_edge)
+        center_xy = np.mean(rect_coords[:4, :], axis=0)
+        min_z = np.min(points[:, 2])
+        max_z = np.max(points[:, 2])
+        center = np.array([center_xy[0], center_xy[1], (min_z + max_z) / 2])
+        x_axis = np.array([longest_edge[0], longest_edge[1], 0])
+        z_axis = np.array([0, 0, max_z - min_z])
+        x_axis = x_axis / (np.linalg.norm(x_axis) + eps)
+        z_axis = z_axis / (np.linalg.norm(z_axis) + eps)
+        y_axis = np.cross(z_axis, x_axis)
+
+        if (longest_edge_len - shortest_edge_len) / (shortest_edge_len + eps) < 0.1:
+            # Could be a circle
+            min_bound = np.min(points, axis=0)
+            max_bound = np.max(points, axis=0)
+            axis_aligned_extent = max_bound - min_bound
+            longest_edge_len_aa = np.max(axis_aligned_extent[:2])
+            shortest_edge_len_aa = np.min(axis_aligned_extent[:2])
+            if (np.abs(longest_edge_len_aa - longest_edge_len) / (longest_edge_len + eps) < 0.1) and (np.abs(shortest_edge_len_aa - shortest_edge_len) / (shortest_edge_len + eps) < 0.1):
+                # aa box is similar to box
+                return self.create_axis_aligned_from_points(points)
+
+        self.center = np.array(center)
+        self.extent = np.array([longest_edge_len, shortest_edge_len, max_z - min_z])
+        self.R = np.array([x_axis, y_axis, z_axis]).T
+
+    def create_joint_aligned_bbox(self, points, joint_origin, joint_axis):
+        # Rotate the points to the joint axis
+        joint_axis = joint_axis / (np.linalg.norm(joint_axis) + eps)
+        joint_T = np.eye(4)
+        joint_T[:3, 3] = joint_origin
+        joint_T_x_axis = np.array([1, 0, 0])
+        if np.abs(np.dot(joint_axis, joint_T_x_axis)) > 0.9:
+            joint_T_x_axis = np.array([0, 1, 0])
+        joint_T_y_axis = np.cross(joint_axis, joint_T_x_axis)
+        joint_T_y_axis = joint_T_y_axis / (np.linalg.norm(joint_T_y_axis) + eps)
+        joint_T_x_axis = np.cross(joint_T_y_axis, joint_axis)
+        joint_T_x_axis = joint_T_x_axis / (np.linalg.norm(joint_T_x_axis) + eps)
+        joint_T[:3, :3] = np.array([joint_T_x_axis, joint_T_y_axis, joint_axis]).T
+        joint_T_inv = np.linalg.inv(joint_T)
+        points = points @ joint_T_inv[:3, :3].T + joint_T_inv[:3, 3]
+        # Minimum bounding box in 3D
+        self.create_minimum_projected_bbox(points)
+        # Rotate the bbox to the joint axis
+        self.rotate(joint_T[:3, :3], (0, 0, 0))
+        self.translate(joint_T[:3, 3])
+
+    def get_min_bound(self):
+        return self.center - self.extent / 2
+
+    def get_max_bound(self):
+        return self.center + self.extent / 2
+
+    def rotate(self, R, center=np.array([0, 0, 0])):
+        self.center = R @ (self.center - center) + center
+        self.R = R @ self.R
+
+    def translate(self, T):
+        self.center += T
+
+    def transform(self, T):
+        self.center = T[:3, :3] @ self.center + T[:3, 3]
+        self.R = T[:3, :3] @ self.R
+
+    def get_points(self):
+        bbox_R = self.R
+        x_axis = np.dot(bbox_R, np.array([self.extent[0] / 2, 0, 0]))
+        y_axis = np.dot(bbox_R, np.array([0, self.extent[1] / 2, 0]))
+        z_axis = np.dot(bbox_R, np.array([0, 0, self.extent[2] / 2]))
+
+        points = np.zeros((8, 3))
+        points[0] = self.center - x_axis - y_axis - z_axis
+        points[1] = self.center + x_axis - y_axis - z_axis
+        points[2] = self.center - x_axis + y_axis - z_axis
+        points[3] = self.center - x_axis - y_axis + z_axis
+        points[4] = self.center + x_axis + y_axis + z_axis
+        points[5] = self.center - x_axis + y_axis + z_axis
+        points[6] = self.center + x_axis - y_axis + z_axis
+        points[7] = self.center + x_axis + y_axis - z_axis
+        return points
+
+    def get_array(self):
+        return np.concatenate([self.center, self.extent, R.from_matrix(self.R).as_rotvec()])
+
+    def get_pose(self):
+        pose = np.eye(4)
+        pose[:3, :3] = self.R
+        pose[:3, 3] = self.center
+        return pose
+
+    ########## Annotation tools ##########
+    def get_bbox_3d_proj(self, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height):
+        """BBox 3d projected to pixel space."""
+        points = self.get_points()
+        points_cam = points @ camera_pose[:3, :3].T + camera_pose[:3, 3]
+        points_pixel = []
+        for point_3d in points_cam:
+            point_2d = [-point_3d[0] / point_3d[2], point_3d[1] / point_3d[2]]
+            pixel_x = (point_2d[0] * intrinsics[0, 0] + intrinsics[0, 2]) / img_width
+            pixel_y = (point_2d[1] * intrinsics[1, 1] + intrinsics[1, 2]) / img_height
+            pixel_z = (np.abs(point_3d[2]) - depth_min) / (depth_max - depth_min + 1e-6)
+            points_pixel.append([pixel_x, pixel_y, pixel_z])
+        # Clip to [0, 1]
+        points_pixel = np.clip(points_pixel, 0, 1)
+        return np.array(points_pixel)
+
+    @staticmethod
+    def project_points(points, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height):
+        proj_points = []
+        for point in points:
+            point_cam = point @ camera_pose[:3, :3].T + camera_pose[:3, 3]
+            point_2d = [-point_cam[0] / point_cam[2], point_cam[1] / point_cam[2]]
+            pixel_x = (point_2d[0] * intrinsics[0, 0] + intrinsics[0, 2]) / img_width
+            pixel_y = (point_2d[1] * intrinsics[1, 1] + intrinsics[1, 2]) / img_height
+            pixel_z = (np.abs(point_cam[2]) - depth_min) / (depth_max - depth_min + 1e-6)
+            pixel = np.array([pixel_x, pixel_y, pixel_z])
+            proj_points.append(pixel)
+        proj_points = np.clip(proj_points, 0, 1)
+        return np.array(proj_points)
+
+    def get_bbox_o3d(self, min_length=0.05):
+        import open3d as o3d
+
+        bbox = o3d.geometry.OrientedBoundingBox()
+        bbox.center = self.center
+        bbox_extent = np.copy(self.extent)
+        bbox_extent = np.clip(bbox_extent, min_length, None)
+        bbox.extent = bbox_extent
+        bbox.R = self.R
+        bbox.color = [1, 0, 0]
+        return bbox

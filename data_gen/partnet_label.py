@@ -41,7 +41,7 @@ logging.basicConfig(level=logging.INFO)
 logger.setLevel(logging.INFO)
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
-from handal_label import farthest_point_sample
+from utils import farthest_point_sample
 
 
 ################################# Utils #################################

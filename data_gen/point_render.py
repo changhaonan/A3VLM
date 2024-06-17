@@ -64,7 +64,7 @@ class BBox3D:
         self.extent = np.asarray(obb.extent)
         self.R = np.asarray(obb.R)
 
-    def create_minium_projected_bbox(self, points):
+    def create_minimum_projected_bbox(self, points):
         points_xy = points[:, :2]
         # Minimum bounding box in 2D
         multipoint = MultiPoint(points_xy)
@@ -559,7 +559,7 @@ def generate_label_3d(points, colors, normals, masks, joint_info, semantic_data,
                     # bbox.create_axis_aligned_from_points(mask_pcd)
                     # Have enough points to compute the minimum bbox
                     # bbox.create_minimum_axis_aligned_bbox(mask_pcd)
-                    bbox.create_minium_projected_bbox(mask_pcd)
+                    bbox.create_minimum_projected_bbox(mask_pcd)
                 else:
                     bbox.create_axis_aligned_from_points(mask_pcd)
                 # Compute interaction points
