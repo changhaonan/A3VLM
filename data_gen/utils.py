@@ -215,13 +215,14 @@ def farthest_point_sample(point, npoint):
 
 
 ####################################### 3D Structure ########################################
-class BBox3D:
-    """3D bounding box tool."""
+class AxisBBox3D:
+    """Axis 3D BBox."""
 
-    def __init__(self, center=None, extent=None, rot_vec=None) -> None:
+    def __init__(self, center=None, extent=None, rot_vec=None, axis=None) -> None:
         self.extent = np.ones(3) if extent is None else np.array(extent)
         self.center = np.zeros(3) if center is None else np.array(center)
         self.R = np.eye(3) if rot_vec is None else R.from_rotvec(rot_vec).as_matrix()
+        self.axis = np.zeros([2, 3]) if axis is None else axis
 
     def create_axis_aligned_from_points(self, points):
         min_bound = np.min(points, axis=0)
@@ -276,6 +277,7 @@ class BBox3D:
         self.center = np.array(center)
         self.extent = np.array([longest_edge_len, shortest_edge_len, max_z - min_z])
         self.R = np.array([x_axis, y_axis, z_axis]).T
+        self.axis = np.array([[0, 0, max_z], [0, 0, min_z]])
 
     def create_joint_aligned_bbox(self, points, joint_origin, joint_axis):
         # Rotate the points to the joint axis
@@ -307,13 +309,16 @@ class BBox3D:
     def rotate(self, R, center=np.array([0, 0, 0])):
         self.center = R @ (self.center - center) + center
         self.R = R @ self.R
+        self.axis = self.axis @ R.T
 
     def translate(self, T):
         self.center += T
+        self.axis += T
 
     def transform(self, T):
         self.center = T[:3, :3] @ self.center + T[:3, 3]
         self.R = T[:3, :3] @ self.R
+        self.axis = self.axis @ T[:3, :3].T + T[:3, 3]
 
     def get_points(self):
         bbox_R = self.R
@@ -332,8 +337,11 @@ class BBox3D:
         points[7] = self.center + x_axis + y_axis - z_axis
         return points
 
-    def get_array(self):
+    def get_bbox_array(self):
         return np.concatenate([self.center, self.extent, R.from_matrix(self.R).as_rotvec()])
+
+    def get_axis_array(self):
+        return self.axis.flatten()
 
     def get_pose(self):
         pose = np.eye(4)
@@ -344,18 +352,13 @@ class BBox3D:
     ########## Annotation tools ##########
     def get_bbox_3d_proj(self, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height):
         """BBox 3d projected to pixel space."""
-        points = self.get_points()
-        points_cam = points @ camera_pose[:3, :3].T + camera_pose[:3, 3]
-        points_pixel = []
-        for point_3d in points_cam:
-            point_2d = [-point_3d[0] / point_3d[2], point_3d[1] / point_3d[2]]
-            pixel_x = (point_2d[0] * intrinsics[0, 0] + intrinsics[0, 2]) / img_width
-            pixel_y = (point_2d[1] * intrinsics[1, 1] + intrinsics[1, 2]) / img_height
-            pixel_z = (np.abs(point_3d[2]) - depth_min) / (depth_max - depth_min + 1e-6)
-            points_pixel.append([pixel_x, pixel_y, pixel_z])
-        # Clip to [0, 1]
-        points_pixel = np.clip(points_pixel, 0, 1)
-        return np.array(points_pixel)
+        # Get the 3D bbox points
+        bbox_points = self.get_points()
+        return AxisBBox3D.project_points(bbox_points, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height)
+
+    def get_axis_3d_proj(self, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height):
+        """Axis 3d projected to pixel space."""
+        return AxisBBox3D.project_points(self.axis, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height)
 
     @staticmethod
     def project_points(points, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height):
@@ -368,7 +371,7 @@ class BBox3D:
             pixel_z = (np.abs(point_cam[2]) - depth_min) / (depth_max - depth_min + 1e-6)
             pixel = np.array([pixel_x, pixel_y, pixel_z])
             proj_points.append(pixel)
-        proj_points = np.clip(proj_points, 0, 1)
+        # proj_points = np.clip(proj_points, 0, 1)
         return np.array(proj_points)
 
     def get_bbox_o3d(self, min_length=0.05):
