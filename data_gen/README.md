@@ -41,3 +41,9 @@ python preprocess_multiscan.py --multi_scan_dir=${multi_scan_dir}  --multi_scan_
 Notice: this step will use a lot of diskspace. One video will extract around 20GB images. And we have 112 videos for MultiScan in total.
 
 ### Generate A3 Annotation
+
+### TODO:
+
+1. Add support for anno that exceeds the boundary.
+2. Add support for more accurate visibility measure.
+3. Add support for depth normalization.
