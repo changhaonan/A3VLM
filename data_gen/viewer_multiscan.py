@@ -95,7 +95,11 @@ def save_obj_parts_func(obj_part_dict):
 if __name__ == "__main__":
     multi_scan_dir = "/home/harvey/Data/multi_scan"
     multi_scan_art_file = "/home/harvey/Data/multi_scan_art/articulated_dataset/articulated_objects.train.h5"
-    data_id = "scene_00000_01"
+    data_id = "scene_00010_01"
+    enable_filter = True
+
+    export_dir = os.path.join(multi_scan_dir, "output", data_id, "anno")
+    os.makedirs(export_dir, exist_ok=True)
 
     mesh_file = f"{data_id}.ply"
     mesh_file = os.path.join(multi_scan_dir, "output", data_id, mesh_file)
@@ -159,10 +163,19 @@ if __name__ == "__main__":
         motion_origins = np.dot(motion_origins, transformation_back[:3, :3].T) + transformation_back[:3, 3]
 
         part_labels = obj_parts.get("partLabels")[1:]  # First one is static
+        # Sort by numerical order
+        part_labels = sorted(part_labels, key=lambda x: int(x.split(".")[-1]))
         for frame_idx, (part_label, motion_axis, motion_origin) in enumerate(zip(part_labels, motion_axes, motion_origins)):
             part_idx = int(part_label.split(".")[-1])
             # Part pcd
             part_pts = np.copy(obj_pts_pos[obj_ins_seg == part_idx])
+            if enable_filter:
+                # Filter out outliers using DBSCAN
+                pcd = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(part_pts))
+                pcd.estimate_normals()
+                cl, ind = pcd.remove_radius_outlier(nb_points=10, radius=0.05)
+                part_pts = np.asarray(pcd.points)[ind]
+
             part_bbox = AxisBBox3D()
             part_bbox.create_joint_aligned_bbox(part_pts, motion_origin, motion_axis)
             part_bboxes.append(part_bbox)
@@ -172,15 +185,15 @@ if __name__ == "__main__":
             arrows.append(arrow)
 
             # Save the annotation in part level
-            part_name = f"{data_id}_{part_idx}"
+            part_name = f"{data_id}_{part_idx + exist_num_parts}"
             anno_3d_dict[part_name] = {}
             anno_3d_dict[part_name]["objectId"] = obj_name
             anno_3d_dict[part_name]["bbox_3d"] = part_bbox.get_bbox_array()
             anno_3d_dict[part_name]["axis_3d"] = part_bbox.get_axis_array()
 
-        # Update the existing num parts
-        exist_num_parts += np.max(obj_ins_seg) + 1
-        # Generate A3 annotations
+            # Update the existing num parts
+            exist_num_parts += np.max(obj_ins_seg) + 1
+        # [Debug]
         part_bboxes_o3d = [bbox.get_bbox_o3d() for bbox in part_bboxes]
         parts_vis.extend(arrows + part_bboxes_o3d)
         o3d.visualization.draw_geometries([obj_pts] + arrows + part_bboxes_o3d, window_name=obj_name)
@@ -222,8 +235,7 @@ if __name__ == "__main__":
                     visible_part = obj_pts_all[obj_sem_seg == visible_seg]
                     visible_part_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(visible_part))
                     visible_part_o3d.paint_uniform_color([1, 0, 0])
-                    # global_origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)
-                    o3d.visualization.draw_geometries([mesh, visible_part_o3d] + transform_origins + [bbox.get_bbox_o3d()])
+                    # o3d.visualization.draw_geometries([mesh, visible_part_o3d] + transform_origins + [bbox.get_bbox_o3d()])
 
                     # Load the image
                     image_file = os.path.join(multi_scan_dir, "output", data_id, "video", f"{frame_idx+1:04d}.png")
@@ -254,5 +266,6 @@ if __name__ == "__main__":
                     # Draw the lines
                     # reshape the height to be 480 for vis
                     image = cv2.resize(image, (int(480 * image.shape[1] / image.shape[0]), 480))
-                    cv2.imshow("image", image)
-                    cv2.waitKey(0)
+                    # cv2.imshow("image", image)
+                    # cv2.waitKey(0)
+                    cv2.imwrite(os.path.join(export_dir, f"{frame_idx+1:04d}_{part_name}.png"), image)

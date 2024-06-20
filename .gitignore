@@ -22,3 +22,5 @@ Thumbs.db
 *.pyo
 *.pyd
 **/__pycache__/**
+
+multi_scan

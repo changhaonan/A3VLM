@@ -23,5 +23,5 @@ def preprocess_multiscan(multi_scan_dir, multi_scan_art_file, data_id):
 if __name__ == "__main__":
     multi_scan_dir = "/home/harvey/Data/multi_scan/output"
     multi_scan_art_file = "/home/harvey/Data/multi_scan_art/articulated_dataset/articulated_objects.train.h5"
-    data_id = "scene_00000_01"
+    data_id = "scene_00010_01"
     preprocess_multiscan(multi_scan_dir, multi_scan_art_file, data_id)
