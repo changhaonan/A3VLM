@@ -1,4 +1,4 @@
-"""Viewer of multiscan data."""
+"""Generate lables for multiscan data."""
 
 import cv2
 import h5py
@@ -8,7 +8,7 @@ import numpy as np
 import open3d as o3d
 import matplotlib.pyplot as plt
 from utils import AxisBBox3D
-
+from queue import PriorityQueue
 ######################## General 3D tools ########################
 
 
@@ -28,28 +28,33 @@ def calculate_pts_in_sight(pts, world2cam, camera_intrinsics, **kwargs):
     pts_in_sight = pts_cam[pts_in_sight_idx]
     # Compute the visible seg
     visible_segs = []
+    visible_ratios =[]
     if pts_seg is not None:
         seg_counts = kwargs.get("seg_counts", None)
         visible_seg = pts_seg[pts_in_sight_idx]
         for seg in np.unique(visible_seg):
-            visble_seg_count = np.sum(visible_seg == seg)
+            visible_seg_count = np.sum(visible_seg == seg)
             seg_count = seg_counts[seg] if seg_counts is not None else np.sum(pts_seg == seg)
-            if visble_seg_count / seg_count > 0.2:
+            visible_ratio = visible_seg_count / seg_count
+            if visible_ratio > 0.2:
                 visible_segs.append(seg)
-    # # # [Debug]
-    # pts_all = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pts_cam))
-    # pts_all.colors = o3d.utility.Vector3dVector(pts_color)
-    # pts_in_sight_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pts_in_sight))
-    # pts_in_sight_color = pts_color[pts_in_sight_idx] * 0.3
-    # pts_in_sight_o3d.colors = o3d.utility.Vector3dVector(pts_in_sight_color)
-    # visible_bbox = []
-    # for seg in visible_segs:
-    #     bbox = AxisBBox3D()
-    #     bbox.create_minimum_axis_aligned_bbox(pts_cam[pts_seg == seg])
-    #     visible_bbox.append(bbox.get_bbox_o3d())
-    # origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)
-    # o3d.visualization.draw_geometries([pts_all, pts_in_sight_o3d, origin] + visible_bbox)
-    return visible_segs
+                visible_ratios.append(visible_ratio)
+    vis = kwargs.get("vis", False)
+    if vis:
+        # [Debug]: Visualize the visible region
+        pts_all = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pts_cam))
+        pts_all.colors = o3d.utility.Vector3dVector(pts_color)
+        pts_in_sight_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pts_in_sight))
+        pts_in_sight_color = pts_color[pts_in_sight_idx] * 0.3
+        pts_in_sight_o3d.colors = o3d.utility.Vector3dVector(pts_in_sight_color)
+        visible_bbox = []
+        for seg in visible_segs:
+            bbox = AxisBBox3D()
+            bbox.create_minimum_axis_aligned_bbox(pts_cam[pts_seg == seg])
+            visible_bbox.append(bbox.get_bbox_o3d())
+        origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0)
+        o3d.visualization.draw_geometries([pts_all, pts_in_sight_o3d, origin] + visible_bbox)
+    return visible_segs, visible_ratios
 
 
 def calculate_zy_rotation_for_arrow(vec):
@@ -93,10 +98,20 @@ def save_obj_parts_func(obj_part_dict):
 
 
 if __name__ == "__main__":
-    multi_scan_dir = "/home/harvey/Data/multi_scan"
-    multi_scan_art_file = "/home/harvey/Data/multi_scan_art/articulated_dataset/articulated_objects.train.h5"
-    data_id = "scene_00010_01"
-    enable_filter = True
+    # Parse config
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--multi_scan_dir", type=str, default="/home/harvey/Data/multi_scan")
+    parser.add_argument("--multi_scan_art_file", type=str, default="/home/harvey/Data/multi_scan_art/articulated_dataset/articulated_objects.train.h5")
+    parser.add_argument("--data_id", type=str, default="scene_00000_01")
+    parser.add_argument("--enable_filter", type=bool, default=True)
+    args = parser.parse_args()
+
+    multi_scan_dir = args.multi_scan_dir
+    multi_scan_art_file = args.multi_scan_art_file
+    data_id = args.data_id
+    enable_filter = args.enable_filter
+    vis = False
 
     export_dir = os.path.join(multi_scan_dir, "output", data_id, "anno")
     os.makedirs(export_dir, exist_ok=True)
@@ -104,9 +119,7 @@ if __name__ == "__main__":
     mesh_file = f"{data_id}.ply"
     mesh_file = os.path.join(multi_scan_dir, "output", data_id, mesh_file)
 
-    # Load the mesh & alignment structure
-    mesh = o3d.io.read_triangle_mesh(mesh_file)
-
+    # Alignment structure
     alignment_file = f"{data_id}.align.json"
     alignment_file = os.path.join(multi_scan_dir, "output", data_id, alignment_file)
     with open(alignment_file) as f:
@@ -114,8 +127,6 @@ if __name__ == "__main__":
     coordinate_transform = alignment.get("coordinate_transform")
     # coordinate_transform is the 16x1 vector
     coordinate_mat = np.reshape(coordinate_transform, (4, 4), order="F")
-    # apply inplace transformation, the mesh is transformed back to the pose without alignment
-    # mesh.transform(coordinate_mat)
 
     # Load transforms
     frame_file = f"{data_id}.jsonl"
@@ -127,6 +138,12 @@ if __name__ == "__main__":
     with h5py.File(multi_scan_art_file, "r") as h5_file:
         h5_file.visititems(save_obj_parts_func(obj_part_dict))
 
+    # [Debug]: analysis the trainfiles
+    # tran_ids = []
+    # for obj_name, obj_parts in obj_part_dict.items():
+    #     tran_ids.append("_".join(obj_name.split("_")[:3]))
+    # print(len(set(tran_ids)))
+    # print(set(tran_ids))
     # Annotations for parts
     obj_pts_all = []
     obj_seg_all = []
@@ -191,14 +208,19 @@ if __name__ == "__main__":
             anno_3d_dict[part_name]["bbox_3d"] = part_bbox.get_bbox_array()
             anno_3d_dict[part_name]["axis_3d"] = part_bbox.get_axis_array()
 
-            # Update the existing num parts
-            exist_num_parts += np.max(obj_ins_seg) + 1
-        # [Debug]
-        part_bboxes_o3d = [bbox.get_bbox_o3d() for bbox in part_bboxes]
-        parts_vis.extend(arrows + part_bboxes_o3d)
-        o3d.visualization.draw_geometries([obj_pts] + arrows + part_bboxes_o3d, window_name=obj_name)
-        # transform before visualize
-        # o3d.visualization.draw_geometries([obj_pts, mesh] + arrows + part_bboxes_o3d)
+        # Update the existing num parts
+        exist_num_parts += np.max(obj_ins_seg) + 1
+        print(exist_num_parts)
+        # [Debug]: Visualize each part
+        if vis:
+            part_bboxes_o3d = [bbox.get_bbox_o3d() for bbox in part_bboxes]
+            parts_vis.extend(arrows + part_bboxes_o3d)
+            o3d.visualization.draw_geometries([obj_pts] + arrows + part_bboxes_o3d, window_name=obj_name)
+    if vis:
+        # Load the mesh & alignment structure
+        mesh = o3d.io.read_triangle_mesh(mesh_file)
+    else:
+        mesh = None
 
     # Traverse frames
     obj_pts_all = np.vstack(obj_pts_all)
@@ -206,11 +228,13 @@ if __name__ == "__main__":
     obj_seg_counts = {}
     for seg in np.unique(obj_sem_seg):
         obj_seg_counts[seg] = np.sum(obj_sem_seg == seg)
-    obj_pts_all_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(obj_pts_all))
-    obj_pts_all_o3d.colors = o3d.utility.Vector3dVector(plt.cm.get_cmap("tab20")(obj_sem_seg % 20)[:, :3])
-    o3d.visualization.draw_geometries([obj_pts_all_o3d])
     transform_origins = []
+
+    # Generate and export the annotation
+    priority_queue_dict = {}
+    max_queue_len = 100
     for frame_idx, frame in enumerate(frames):
+        print(f"Processing frame {frame_idx}/{len(frames)}...")
         size = 1.0 if frame_idx == 0 else 0.1
         origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=size)
         transform = np.asarray(frame.get("transform"))
@@ -221,51 +245,79 @@ if __name__ == "__main__":
         if frame_idx % 10 == 0:
             transform_origins.append(origin.transform(transform))
             # Compute points in sight
-            visible_segs = calculate_pts_in_sight(obj_pts_all, np.linalg.inv(transform), intrinsics, pts_seg=obj_sem_seg, seg_counts=obj_seg_counts)
+            visible_segs, visible_ratios = calculate_pts_in_sight(obj_pts_all, np.linalg.inv(transform), intrinsics, pts_seg=obj_sem_seg, seg_counts=obj_seg_counts)
             if visible_segs:
-                for visible_seg in visible_segs:
+                for visible_seg, visible_ratio in zip(visible_segs, visible_ratios):
                     part_name = f"{data_id}_{visible_seg}"
                     if part_name not in anno_3d_dict:
                         continue
                     bbox_3d = anno_3d_dict[f"{data_id}_{visible_seg}"]["bbox_3d"]
                     axis_3d = anno_3d_dict[f"{data_id}_{visible_seg}"]["axis_3d"]
-                    # [Debug]
                     bbox = AxisBBox3D(bbox_3d[:3], bbox_3d[3:6], bbox_3d[6:9], axis_3d.reshape(2, 3))
-                    # Visualize the mesh
-                    visible_part = obj_pts_all[obj_sem_seg == visible_seg]
-                    visible_part_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(visible_part))
-                    visible_part_o3d.paint_uniform_color([1, 0, 0])
-                    # o3d.visualization.draw_geometries([mesh, visible_part_o3d] + transform_origins + [bbox.get_bbox_o3d()])
 
-                    # Load the image
-                    image_file = os.path.join(multi_scan_dir, "output", data_id, "video", f"{frame_idx+1:04d}.png")
-                    image = cv2.imread(image_file)
-                    # Project the annotation
-                    bbox_points = bbox.get_bbox_3d_proj(intrinsics, np.linalg.inv(transform), 0, 1, image.shape[1], image.shape[0])
-                    axis_points = bbox.get_axis_3d_proj(intrinsics, np.linalg.inv(transform), 0, 1, image.shape[1], image.shape[0])
-                    # Draw the bbox
-                    for i, j in zip([0, 0, 0, 1, 1, 2, 2, 6, 5, 4, 3, 3], [1, 2, 3, 6, 7, 7, 5, 4, 4, 7, 6, 5]):
-                        cv2.line(
-                            image,
-                            (int(bbox_points[i][0] * image.shape[1]), int(bbox_points[i][1] * image.shape[0])),
-                            (int(bbox_points[j][0] * image.shape[1]), int(bbox_points[j][1] * image.shape[0])),
-                            (0, 255, 0),
-                            4,
-                            lineType=cv2.LINE_8,
-                        )
-                    # Draw the lines
-                    for i, j in zip([0], [1]):
-                        cv2.line(
-                            image,
-                            (int(axis_points[i][0] * image.shape[1]), int(axis_points[i][1] * image.shape[0])),
-                            (int(axis_points[j][0] * image.shape[1]), int(axis_points[j][1] * image.shape[0])),
-                            (0, 255, 0),
-                            4,
-                            lineType=cv2.LINE_8,
-                        )
-                    # Draw the lines
-                    # reshape the height to be 480 for vis
-                    image = cv2.resize(image, (int(480 * image.shape[1] / image.shape[0]), 480))
-                    # cv2.imshow("image", image)
-                    # cv2.waitKey(0)
-                    cv2.imwrite(os.path.join(export_dir, f"{frame_idx+1:04d}_{part_name}.png"), image)
+                    # Wrap up the annotation
+                    annotation = {}
+                    annotation["transform"] = transform.tolist()
+                    annotation["intrinsics"] = intrinsics.tolist()
+                    annotation["frame_idx"] = frame_idx
+                    annotation["data_id"] = data_id
+                    annotation["part_name"] = part_name
+                    annotation["bbox_3d"] = bbox.get_bbox_array().tolist()
+                    annotation["axis_3d"] = bbox.get_axis_array().tolist()
+                    annotation["visible_ratio"] = visible_ratio
+
+                    # Add the annotation to priority queue
+                    if visible_seg not in priority_queue_dict:
+                        priority_queue_dict[visible_seg] = PriorityQueue()
+                    priority_queue_dict[visible_seg].put((-visible_ratio, frame_idx, annotation))
+
+    # Save max_queue_len annotations which has max visibility for each part
+    annotations = []
+    for part_id, queue in priority_queue_dict.items():
+        for i in range(10):
+            _, __, annotation = queue.get()
+            annotations.append(annotation)
+            if True:
+                frame_idx = annotation["frame_idx"]
+                bbox_3d = annotation["bbox_3d"]
+                axis_3d = annotation["axis_3d"]
+                data_id = annotation["data_id"]
+                transform = np.asarray(annotation["transform"]).reshape(4, 4)
+                intrinsics = np.asarray(annotation["intrinsics"]).reshape(3, 3)
+                # Load the image
+                image_file = os.path.join(multi_scan_dir, "output", data_id, "video", f"{frame_idx+1:04d}.png")
+                image = cv2.imread(image_file)
+                # Project the annotation
+                bbox = AxisBBox3D(bbox_3d[:3], bbox_3d[3:6], bbox_3d[6:9], np.array(axis_3d).reshape(2, 3))
+                bbox_points = bbox.get_bbox_3d_proj(intrinsics, np.linalg.inv(transform), 0, 1, image.shape[1], image.shape[0])
+                axis_points = bbox.get_axis_3d_proj(intrinsics, np.linalg.inv(transform), 0, 1, image.shape[1], image.shape[0])
+                # Draw the bbox
+                for i, j in zip([0, 0, 0, 1, 1, 2, 2, 6, 5, 4, 3, 3], [1, 2, 3, 6, 7, 7, 5, 4, 4, 7, 6, 5]):
+                    cv2.line(
+                        image,
+                        (int(bbox_points[i][0] * image.shape[1]), int(bbox_points[i][1] * image.shape[0])),
+                        (int(bbox_points[j][0] * image.shape[1]), int(bbox_points[j][1] * image.shape[0])),
+                        (0, 255, 0),
+                        4,
+                        lineType=cv2.LINE_8,
+                    )
+                # Draw the lines
+                for i, j in zip([0], [1]):
+                    cv2.line(
+                        image,
+                        (int(axis_points[i][0] * image.shape[1]), int(axis_points[i][1] * image.shape[0])),
+                        (int(axis_points[j][0] * image.shape[1]), int(axis_points[j][1] * image.shape[0])),
+                        (0, 0, 255),
+                        4,
+                        lineType=cv2.LINE_8,
+                    )
+                # Draw the lines
+                # reshape the height to be 480 for vis
+                image = cv2.resize(image, (int(480 * image.shape[1] / image.shape[0]), 480))
+                # cv2.imshow("image", image)
+                # cv2.waitKey(0)
+                cv2.imwrite(os.path.join(export_dir, f"{part_id:04d}_{frame_idx+1:04d}.png"), image)
+    
+    # Export the annotation
+    with open(os.path.join(export_dir, f"{data_id}.json"), "w") as f:
+        json.dump(annotations, f)
