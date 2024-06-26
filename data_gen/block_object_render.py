@@ -7,6 +7,7 @@ import pyrender
 import trimesh
 import numpy as np
 from urchin import URDF
+from matplotlib import pyplot as plt
 
 
 ################################ Utility functions ################################
@@ -118,7 +119,7 @@ def compute_kinematic_level(robot):
     return kinematic_level
 
 
-def generate_robot_cfg(robot: URDF, rng: np.random.RandomState):
+def generate_robot_cfg(robot: URDF, rng: np.random.RandomState, is_bg_obj=False):
     # Compute joint kinematic level
     kinematic_level = compute_kinematic_level(robot)
 
@@ -126,7 +127,7 @@ def generate_robot_cfg(robot: URDF, rng: np.random.RandomState):
     joint_cfg = {}  # Save in joint's name, raw value
     link_cfg = {}  # Save in link's name, normalized
     for joint in actuaion_joints:
-        joint_value_sample = rng.rand()
+        joint_value_sample = rng.rand() if not is_bg_obj else 0.0
         if joint.limit is None:
             joint_limit = [-np.pi, np.pi]
         else:
@@ -156,29 +157,42 @@ def generate_block_setup(data_id, on_list, under_list, rng=np.random.RandomState
     """
     on_bbox_list = [
         [[0.0, 0.0, 0.0], [0.5, 0.5, 1.0]],
-        [[-0.25, -0.25, 0.0], [0.25, 0.25, 1.0]],
-        [[0.5, 0.5, 0.0], [1.0, 1.0, 1.0]],
+        [[-0.5, 0.0, 0.0], [0.0, 0.5, 1.0]],
+        [[0.0, -0.5, 0.0], [0.5, 0.0, 1.0]],
+        [[-0.5, -0.5, 0.0], [0.0, 0.0, 1.0]],
     ]
     goal_bbox_list = []
     align_direction_list = []
     data_ids = []
+    on_bbox_idxs = rng.choice(len(on_bbox_list), 2, replace=False)
     if data_id in on_list:
-        # Object is placed on other objects
+        # First on
         data_ids.append(data_id)
-        goal_bbox_list.append(np.array(on_bbox_list[rng.choice(len(on_bbox_list))]))
+        goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[0]]))
+        align_direction_list.append(np.array([0.0, 0.0, -1.0]))
+        # Second on
+        on_data_id = rng.choice(on_list)
+        data_ids.append(on_data_id)
+        goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[1]]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
         # Select under object
         under_data_id = rng.choice(under_list)
         data_ids.append(under_data_id)
-        goal_bbox_list.append(np.array([[-0.5, -0.5, 0.0], [0.5, 0.5, -1.0]]))
+        goal_bbox_list.append(np.array([[-0.5, -0.5, 0.0], [0.5, 0.5, -2.0]]))
         align_direction_list.append(np.array([0.0, 0.0, 1.0]))
     elif data_id in under_list:
         data_ids.append(data_id)
         goal_bbox_list.append(np.array([[-0.5, -0.5, 0.0], [0.5, 0.5, -1.0]]))
         align_direction_list.append(np.array([0.0, 0.0, 1.0]))
+        # First on
         on_data_id = rng.choice(on_list)
         data_ids.append(on_data_id)
-        goal_bbox_list.append(np.array(on_bbox_list[rng.choice(len(on_bbox_list))]))
+        goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[0]]))
+        align_direction_list.append(np.array([0.0, 0.0, -1.0]))
+        # Second on
+        on_data_id = rng.choice(on_list)
+        data_ids.append(on_data_id)
+        goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[1]]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
     return data_ids, goal_bbox_list, align_direction_list
 
@@ -207,7 +221,7 @@ def generate_robot_mesh(
         robot_mesh_list.append(mesh)
     robot_mesh = trimesh.util.concatenate(robot_mesh_list)
     robot_bbox = robot_mesh.bounds
-    # # # [DEBUG]: Trimesh Visualize
+    # # # # [DEBUG]: Trimesh Visualize
     # scene = trimesh.Scene()
     # scene.add_geometry(robot_mesh)
     # axis = trimesh.creation.axis(origin_size=0.1)  # You can adjust the size as needed
@@ -234,14 +248,14 @@ def generate_robot_meshes(
         )  # Only the first object is the target object
         data_file = f"{data_dir}/{data_id}/mobility.urdf"
         robot = URDF.load(data_file)
-        joint_cfg, link_cfg = generate_robot_cfg(robot, rng)
+        joint_cfg, link_cfg = generate_robot_cfg(robot, rng, is_bg_obj)
         _robot_link_mesh_map, _robot_visual_map, robot_bbox = generate_robot_mesh(
             robot, joint_cfg, goal_bbox, align_direction, is_bg_obj
         )
 
         # Compute bbox & transform
         transform = compute_bbox_transform(
-            robot_bbox, goal_bbox, align_direction, keep_ratio
+            robot_bbox, goal_bbox, align_direction, keep_ratio, is_bg_obj
         )
         for mesh, (pose, name) in _robot_link_mesh_map.items():
             mesh.apply_transform(transform)
@@ -251,18 +265,19 @@ def generate_robot_meshes(
         robot_link_mesh_map.update(_robot_link_mesh_map)
         robot_visual_map.update(_robot_visual_map)
     # # # [DEBUG]
-    scene = trimesh.Scene()
-    for mesh, (pose, name) in robot_visual_map.items():
-        scene.add_geometry(mesh)
-    axis = trimesh.creation.axis(
-        origin_size=0.1
-    )  # You can adjust the size as needed
-    scene.add_geometry(axis)
-    scene.show()
+    # scene = trimesh.Scene()
+    # for mesh, (pose, name) in robot_visual_map.items():
+    #     scene.add_geometry(mesh)
+    # axis = trimesh.creation.axis(origin_size=0.1)  # You can adjust the size as needed
+    # scene.add_geometry(axis)
+    # scene.show()
     return robot_link_mesh_map, robot_visual_map
 
 
-def compute_bbox_transform(init_bbox, goal_bbox, align_direction, keep_ratio=True):
+def compute_bbox_transform(
+    init_bbox, goal_bbox, align_direction, keep_ratio=True, is_bg_obj=False
+):
+    """Bg object and foreground object has different emphasis."""
     # Compute dimensions
     robot_min = np.min(init_bbox, axis=0)
     robot_max = np.max(init_bbox, axis=0)
@@ -282,10 +297,16 @@ def compute_bbox_transform(init_bbox, goal_bbox, align_direction, keep_ratio=Tru
         scaling_matrix[1, 1] = scale_factors[1]
         scaling_matrix[2, 2] = scale_factors[2]
     else:
-        scaling_matrix[0, 0] = np.min(scale_factors)
-        scaling_matrix[1, 1] = np.min(scale_factors)
-        scaling_matrix[2, 2] = np.min(scale_factors)
-        scale_factors = np.min(scale_factors)
+        if not is_bg_obj:
+            scale_factors = np.min(scale_factors)
+            scaling_matrix[0, 0] = scale_factors
+            scaling_matrix[1, 1] = scale_factors
+            scaling_matrix[2, 2] = scale_factors
+        else:
+            scale_factors = np.max(scale_factors[:2])  # Only care about x, y
+            scaling_matrix[0, 0] = scale_factors
+            scaling_matrix[1, 1] = scale_factors
+            scaling_matrix[2, 2] = scale_factors
 
     # Compute translation
     translation = goal_center - robot_center * scale_factors
@@ -458,15 +479,20 @@ def render_parts_into_block(
             # Show all meshes again
             for mn in scene.mesh_nodes:
                 mn.mesh.is_visible = True
-            mask_imgs.append(mask_img)
+            # # [DEBUG]
+            # plt.imshow(mask_img)
+            # plt.show()
+            # mask_imgs.append(mask_img)
     r.delete()
 
     return color_imgs, depth_imgs, mask_imgs, annotations
 
 
-def render_object_into_block(data_id, data_dir, camera_info, on_list, under_list):
+def render_object_into_block(
+    data_id, data_dir, output_dir, camera_info, on_list, under_list
+):
     """Render an object into a bbox. This bbox is axis-aligned."""
-    sample_type = "uniform"
+    sample_type = "xy"
     only_front = True
     keep_ratio = False
     num_joint_values = 4
@@ -476,6 +502,13 @@ def render_object_into_block(data_id, data_dir, camera_info, on_list, under_list
     light_radius_max = 3.5
     num_poses = 2
     num_samples = num_joint_values * num_poses
+    width = camera_info["width"]
+    height = camera_info["height"]
+    render_result = {
+        "color": np.zeros((num_samples, width, height, 4), dtype=np.uint8),
+        "depth": np.zeros((num_samples, width, height), dtype=np.uint16),
+        "mask": np.zeros((num_samples, width, height), dtype=np.uint8),
+    }
     # Generate camera pose
     radius = 1.0
     cam_radius_min = radius * cam_radius_min  # Minimum distance from the look-at point
@@ -524,7 +557,6 @@ def render_object_into_block(data_id, data_dir, camera_info, on_list, under_list
         robot_link_mesh_map, robot_visual_map = generate_robot_meshes(
             data_dir, data_ids, goal_bbox_list, align_direction_list, rng
         )
-        goal_bbox = np.array([[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]])
         # Render objects
         idx_func = lambda x: x * num_joint_values + joint_idx
         # 1. Render on link level
@@ -550,19 +582,27 @@ def render_object_into_block(data_id, data_dir, camera_info, on_list, under_list
             is_link_map=False,
         )
         # Save images
-        for pose_idx, img in enumerate(color_imgs):
-            cv2.imwrite(f"{output_dir}/color_test/color_{idx_func(pose_idx)}.png", img)
-        pass
+        for pose_idx in range(num_poses):
+            image_idx = idx_func(pose_idx)
+            color_img = cv2.cvtColor(color_imgs[pose_idx], cv2.COLOR_RGBA2BGRA)
+            depth_img = (depth_imgs[pose_idx] * 1000).astype(np.uint16)
+            mask_img = mask_imgs[pose_idx]
+            render_result["color"][image_idx] = color_img
+            render_result["depth"][image_idx] = depth_img
+            render_result["mask"][image_idx] = mask_img
+        render_result["annotations"] = annotations
+    # Save results
+    np.savez_compressed(f"{output_dir}/render_result.npz", render_result)
 
 
 if __name__ == "__main__":
     under_list = ["103351", "40417"]
-    on_list = ["920", "101564", "152", "991", "103007", "103037"]
+    on_list = ["920", "101564", "152", "991", "103007", "103037", "3615"]
     # on_list = ["152"]
 
     data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
     output_dir = "/home/harvey/Data/partnet-mobility-v0/output"
-    data_name = "103351"  #
+    data_name = "920"  #
     data_file = f"{data_dir}/{data_name}/mobility.urdf"
     output_dir = f"{output_dir}/{data_name}"
     camera_info = {
@@ -575,4 +615,6 @@ if __name__ == "__main__":
     }
     os.makedirs(os.path.join(output_dir, "color_test"), exist_ok=True)
 
-    render_object_into_block(data_name, data_dir, camera_info, on_list, under_list)
+    render_object_into_block(
+        data_name, data_dir, output_dir, camera_info, on_list, under_list
+    )
