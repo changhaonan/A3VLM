@@ -15,15 +15,14 @@ import random
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
-from utils import AxisBBox3D
+from utils import AxisBBox3D, get_arrow
 
 
 ############################### Point cloud related ########################################
-def check_annotations_o3d(points, bbox_3d):
+def check_annotations_o3d(points, bbox_3d, axis_3d, title=""):
     import open3d as o3d
 
     bbox_3d = np.array(bbox_3d)
-
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points[:, :3])
     bbox = o3d.geometry.OrientedBoundingBox()
@@ -32,10 +31,13 @@ def check_annotations_o3d(points, bbox_3d):
     bbox.extent = bbox_3d[3:6]
     bbox.color = [1, 0, 0]
 
+    axis_points = np.array(axis_3d).reshape(2, 3)
+    arrow_o3d = get_arrow(axis_points[1], axis_points[0], scale=1, color=[1, 0, 0])
     origin = o3d.geometry.TriangleMesh.create_coordinate_frame(
         size=0.3, origin=[0, 0, 0]
     )
-    o3d.visualization.draw_geometries([pcd, bbox, origin])
+    print(title)
+    o3d.visualization.draw_geometries([pcd, bbox, arrow_o3d, origin])
 
 
 def farthest_point_sample(point, npoint):
@@ -207,16 +209,16 @@ def generate_label_3d(
             axis_direction_raw = link_data["jointData"]["axis"]["direction"]
             axis_origin = vector_fix(axis_origin_raw)
             axis_direction = vector_fix(axis_direction_raw)
-            # Apply object transformation
-            axis_origin = obj_transform[:3, :3] @ axis_origin + obj_transform[:3, 3]
-            axis_direction = obj_transform[:3, :3] @ axis_direction
-            # Normalize
-            axis_direction = axis_direction / (np.linalg.norm(axis_direction) + EPS)
             # Convert y-up to z-up
             axis_origin = np.array([-axis_origin[2], -axis_origin[0], axis_origin[1]])
             axis_direction = np.array(
                 [-axis_direction[2], -axis_direction[0], axis_direction[1]]
             )
+            # Apply object transformation
+            axis_origin = obj_transform[:3, :3] @ axis_origin + obj_transform[:3, 3]
+            axis_direction = obj_transform[:3, :3] @ axis_direction
+            # Normalize
+            axis_direction = axis_direction / (np.linalg.norm(axis_direction) + EPS)
             # Show axis (aligned)
             joint_coord_z = axis_direction
             joint_coord_x = (
@@ -275,12 +277,15 @@ def generate_label_3d(
                 bbox_center = np.array(bbox.center)
                 bbox_size = np.array(bbox.extent)
                 bbox_rotation = R.from_matrix(np.array(bbox.R)).as_rotvec()
-                bbox_rep = np.concatenate([bbox_center, bbox_size, bbox_rotation])
+                bbox_array = bbox.get_bbox_array()
+                axis_array = bbox.get_axis_array()
                 # DEBUG
-                check_annotations_o3d(points, bbox_rep)
+                check_annotations_o3d(
+                    points, bbox_array, axis_array, title=link_data["id"]
+                )
                 label_3d_dict[joint_id] = {
                     "joint_T": joint_T.tolist(),
-                    "bbox_3d": bbox_rep.tolist(),
+                    "bbox_3d": bbox_array.tolist(),
                     "itp_points": inter_points.tolist(),
                     "name": link_data["name"],
                 }
@@ -335,18 +340,19 @@ def process_one_data(data_name, output_dir, sample_size, save_label_3d):
             mask = mask_images[image_idx]
 
             # Replace mask with joint id
-            new_mask = np.zeros_like(mask)
+            new_mask = np.ones_like(mask) * 255
             for mask_id in np.unique(mask):
                 if mask_id == 0:
                     continue
                 mask_i = mask == mask_id
                 if np.sum(mask) > 0:
-                    new_mask[mask_i] = int(joint_info[mask_id - 1]["id"])
-                    # [DEBUG]
+                    new_id = int(joint_info[mask_id - 1]["id"])
+                    new_mask[mask_i] = new_id
+                    # # [DEBUG]
                     # mask_image = np.zeros_like(mask)
                     # mask_image[mask_i] = 255
                     # mask_image = cv2.cvtColor(mask_image, cv2.COLOR_GRAY2BGR)
-                    # cv2.imshow("mask", mask_image)
+                    # cv2.imshow(f"mask-{new_id}", mask_image)
                     # cv2.waitKey(0)
                     # cv2.imwrite(f"mask_{int(joint_info[mask_id - 1]['id'])}.png", mask_image)
 
@@ -362,12 +368,12 @@ def process_one_data(data_name, output_dir, sample_size, save_label_3d):
                 enable_normal=False,
             )
             # [DEBUG] Show point cloud
-            import open3d as o3d
+            # import open3d as o3d
 
-            pcd = o3d.geometry.PointCloud()
-            pcd.points = o3d.utility.Vector3dVector(points)
-            pcd.colors = o3d.utility.Vector3dVector(colors / 255.0)
-            o3d.visualization.draw_geometries([pcd])
+            # pcd = o3d.geometry.PointCloud()
+            # pcd.points = o3d.utility.Vector3dVector(points)
+            # pcd.colors = o3d.utility.Vector3dVector(colors / 255.0)
+            # o3d.visualization.draw_geometries([pcd])
 
             # Generating 3D labels
             camera_pose_inv = np.linalg.inv(camera_pose)

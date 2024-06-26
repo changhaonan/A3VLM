@@ -53,6 +53,44 @@ colors_hex = [
 ]
 
 
+def calculate_zy_rotation_for_arrow(vec):
+    gamma = np.arctan2(vec[1], vec[0])
+    Rz = np.array(
+        [
+            [np.cos(gamma), -np.sin(gamma), 0],
+            [np.sin(gamma), np.cos(gamma), 0],
+            [0, 0, 1],
+        ]
+    )
+    vec = Rz.T @ vec
+    beta = np.arctan2(vec[0], vec[2])
+    Ry = np.array(
+        [[np.cos(beta), 0, np.sin(beta)], [0, 1, 0], [-np.sin(beta), 0, np.cos(beta)]]
+    )
+    return Rz, Ry
+
+
+def get_arrow(end, origin=np.array([0, 0, 0]), scale=1.0, color=np.array([1, 0, 0])):
+    import open3d as o3d
+
+    assert not np.all(end == origin)
+    vec = end - origin
+    size = np.sqrt(np.sum(vec**2))
+
+    Rz, Ry = calculate_zy_rotation_for_arrow(vec)
+    mesh = o3d.geometry.TriangleMesh.create_arrow(
+        cone_radius=size / 17.5 * scale,
+        cone_height=size * 0.2 * scale,
+        cylinder_radius=size / 30 * scale,
+        cylinder_height=size * (1 - 0.2 * scale),
+    )
+    mesh.rotate(Ry, center=np.array([0, 0, 0]))
+    mesh.rotate(Rz, center=np.array([0, 0, 0]))
+    mesh.translate(origin)
+    mesh.paint_uniform_color(color)
+    return mesh
+
+
 def get_rotated_box(cx, cy, w, h, angle):
     # Create a rectangle centered at the origin
     rect = Polygon([(-w / 2, -h / 2), (-w / 2, h / 2), (w / 2, h / 2), (w / 2, -h / 2)])
@@ -248,7 +286,9 @@ class AxisBBox3D:
         min_rect = multipoint.minimum_rotated_rectangle
         rect_coords = list(min_rect.exterior.coords)
         rect_coords = np.array(rect_coords)[:, :2]
-        edges = [rect_coords[i + 1] - rect_coords[i] for i in range(len(rect_coords) - 1)]
+        edges = [
+            rect_coords[i + 1] - rect_coords[i] for i in range(len(rect_coords) - 1)
+        ]
         longest_edge = max(edges, key=lambda x: np.linalg.norm(x))  # Use this as x-axis
         shortest_edge = min(edges, key=lambda x: np.linalg.norm(x))
         longest_edge_len = np.linalg.norm(longest_edge)
@@ -270,7 +310,15 @@ class AxisBBox3D:
             axis_aligned_extent = max_bound - min_bound
             longest_edge_len_aa = np.max(axis_aligned_extent[:2])
             shortest_edge_len_aa = np.min(axis_aligned_extent[:2])
-            if (np.abs(longest_edge_len_aa - longest_edge_len) / (longest_edge_len + eps) < 0.1) and (np.abs(shortest_edge_len_aa - shortest_edge_len) / (shortest_edge_len + eps) < 0.1):
+            if (
+                np.abs(longest_edge_len_aa - longest_edge_len)
+                / (longest_edge_len + eps)
+                < 0.1
+            ) and (
+                np.abs(shortest_edge_len_aa - shortest_edge_len)
+                / (shortest_edge_len + eps)
+                < 0.1
+            ):
                 # aa box is similar to box
                 return self.create_axis_aligned_from_points(points)
 
@@ -338,7 +386,9 @@ class AxisBBox3D:
         return points
 
     def get_bbox_array(self):
-        return np.concatenate([self.center, self.extent, R.from_matrix(self.R).as_rotvec()])
+        return np.concatenate(
+            [self.center, self.extent, R.from_matrix(self.R).as_rotvec()]
+        )
 
     def get_axis_array(self):
         return self.axis.flatten()
@@ -350,25 +400,49 @@ class AxisBBox3D:
         return pose
 
     ########## Annotation tools ##########
-    def get_bbox_3d_proj(self, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height):
+    def get_bbox_3d_proj(
+        self, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height
+    ):
         """BBox 3d projected to pixel space."""
         # Get the 3D bbox points
         bbox_points = self.get_points()
-        return AxisBBox3D.project_points(bbox_points, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height)
+        return AxisBBox3D.project_points(
+            bbox_points,
+            intrinsics,
+            camera_pose,
+            depth_min,
+            depth_max,
+            img_width,
+            img_height,
+        )
 
-    def get_axis_3d_proj(self, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height):
+    def get_axis_3d_proj(
+        self, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height
+    ):
         """Axis 3d projected to pixel space."""
-        return AxisBBox3D.project_points(self.axis, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height)
+        return AxisBBox3D.project_points(
+            self.axis,
+            intrinsics,
+            camera_pose,
+            depth_min,
+            depth_max,
+            img_width,
+            img_height,
+        )
 
     @staticmethod
-    def project_points(points, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height):
+    def project_points(
+        points, intrinsics, camera_pose, depth_min, depth_max, img_width, img_height
+    ):
         proj_points = []
         for point in points:
             point_cam = point @ camera_pose[:3, :3].T + camera_pose[:3, 3]
             point_2d = [-point_cam[0] / point_cam[2], point_cam[1] / point_cam[2]]
             pixel_x = (point_2d[0] * intrinsics[0, 0] + intrinsics[0, 2]) / img_width
             pixel_y = (point_2d[1] * intrinsics[1, 1] + intrinsics[1, 2]) / img_height
-            pixel_z = (np.abs(point_cam[2]) - depth_min) / (depth_max - depth_min + 1e-6)
+            pixel_z = (np.abs(point_cam[2]) - depth_min) / (
+                depth_max - depth_min + 1e-6
+            )
             pixel = np.array([pixel_x, pixel_y, pixel_z])
             proj_points.append(pixel)
         # proj_points = np.clip(proj_points, 0, 1)
