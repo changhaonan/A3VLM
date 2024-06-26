@@ -255,11 +255,6 @@ def render_parts(
             mask_vis = np.logical_and(depth <= full_depth, np.abs(depth) > 0)
             mask_all = np.abs(depth) > 0
             vis_ratio = mask_vis.sum() / (mask_all.sum() + 1e-6)
-            # DEBUG:
-            # cv2.imshow("mask_vis", mask_vis.astype(np.uint8) * 255)
-            # cv2.waitKey(0)
-            # cv2.imshow("mask_all", mask_all.astype(np.uint8) * 255)
-            # cv2.waitKey(0)
 
             if np.any(mask_vis):
                 # Extract a rotating bbox from mask
@@ -290,10 +285,6 @@ def render_parts(
                     "name": node.mesh.name,
                     "camera_pose": camera_pose,
                 }
-                # # Show bbox
-                # vis_img = visualize_bbox(color, annotation["bbox"])
-                # cv2.imshow("vis_img", vis_img)
-                # cv2.waitKey(0)
                 annotations.append(annotation)
 
         # Show all meshes again

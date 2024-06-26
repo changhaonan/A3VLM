@@ -10,7 +10,7 @@ if version.parse(np.__version__) >= version.parse("1.20.0"):
     np.float = float
 
 import argparse
-from urdfpy import URDF
+from urchin import URDF
 import trimesh
 import time
 import os
@@ -42,7 +42,7 @@ def compute_kinematic_level(robot):
 
 
 def render_data_item_with_idx(
-    data_name, data_dir, output_dir, num_poses, camera_info, cam_radius_max, cam_radius_min, num_joint_value, only_front=False, load_camera_pose=False, load_joint_value=False
+    data_name, data_dir, output_dir, num_poses, camera_info, cam_radius_max, cam_radius_min, num_joint_value, only_front=False, load_camera_pose=False, load_joint_value=False, with_surface=True,
 ):
     data_file = f"{data_dir}/{data_name}/mobility.urdf"
     output_dir = f"{output_dir}/{data_name}"
@@ -121,6 +121,13 @@ def render_data_item_with_idx(
             for mesh, pose in robot.visual_trimesh_fk(cfg=joint_cfg).items():
                 robot_visual_map[mesh] = (pose, "visual")
 
+            # Compute object supporting surface
+            robot_mesh_list = []
+            for mesh, (pose, name) in robot_link_mesh_map.items():
+                mesh.apply_transform(pose)
+                robot_mesh_list.append(mesh)
+            robot_mesh = trimesh.util.concatenate(robot_mesh_list)
+            robot_bbox = robot_mesh.bounds
             # Render parts
             # 1. Render on link level
             _annotations, camera_poses, _, depth_imgs, mask_imgs = render_parts(
@@ -147,11 +154,6 @@ def render_data_item_with_idx(
                 predefine_camera_poses=camera_poses,
                 is_link_map=False,
             )
-            robot_mesh_list = []
-            for mesh, (pose, name) in robot_link_mesh_map.items():
-                mesh.apply_transform(pose)
-                robot_mesh_list.append(mesh)
-            robot_mesh = trimesh.util.concatenate(robot_mesh_list)
 
             # Swap y and z axis
             transform = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]])
@@ -227,7 +229,7 @@ if __name__ == "__main__":
     argparser.add_argument("--seed", type=int, default=0, help="Random seed")
     argparser.add_argument("--version", type=int, default=0, help="Version of the dataset")
     argparser.add_argument("--data_dir", type=str, default="test_data")
-    argparser.add_argument("--data_name", type=str, default=None)
+    argparser.add_argument("--data_name", type=str, default="all")
     argparser.add_argument("--output_dir", type=str, default="output")
     argparser.add_argument("--num_poses", type=int, default=5)
     argparser.add_argument("--light_radius_min", type=float, default=3.0)
@@ -269,7 +271,7 @@ if __name__ == "__main__":
     # load_joint_value = True
     only_front = True
 
-    if data_name is not None:
+    if data_name is not None and data_name != "all":
         start_time = time.time()
         render_data_item_with_idx(data_name, data_dir, output_dir, num_poses, camera_info, cam_radius_max, cam_radius_min, num_joint_value, only_front, load_camera_pose, load_joint_value)
         end_time = time.time()
