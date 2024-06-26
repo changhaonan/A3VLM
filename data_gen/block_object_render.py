@@ -154,13 +154,18 @@ def generate_block_setup(data_id, on_list, under_list, rng=np.random.RandomState
     Under list is the list of objects that are placed under other objects.
     Return [goal_bbox_list, align_direction_list]
     """
+    on_bbox_list = [
+        [[0.0, 0.0, 0.0], [0.5, 0.5, 1.0]],
+        [[-0.25, -0.25, 0.0], [0.25, 0.25, 1.0]],
+        [[0.5, 0.5, 0.0], [1.0, 1.0, 1.0]],
+    ]
     goal_bbox_list = []
     align_direction_list = []
     data_ids = []
     if data_id in on_list:
         # Object is placed on other objects
         data_ids.append(data_id)
-        goal_bbox_list.append(np.array([[0.0, 0.0, 0.0], [0.5, 0.5, 1.0]]))
+        goal_bbox_list.append(np.array(on_bbox_list[rng.choice(len(on_bbox_list))]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
         # Select under object
         under_data_id = rng.choice(under_list)
@@ -173,7 +178,7 @@ def generate_block_setup(data_id, on_list, under_list, rng=np.random.RandomState
         align_direction_list.append(np.array([0.0, 0.0, 1.0]))
         on_data_id = rng.choice(on_list)
         data_ids.append(on_data_id)
-        goal_bbox_list.append(np.array([[0.0, 0.0, 0.0], [0.5, 0.5, 1.0]]))
+        goal_bbox_list.append(np.array(on_bbox_list[rng.choice(len(on_bbox_list))]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
     return data_ids, goal_bbox_list, align_direction_list
 
@@ -249,8 +254,10 @@ def generate_robot_meshes(
     scene = trimesh.Scene()
     for mesh, (pose, name) in robot_visual_map.items():
         scene.add_geometry(mesh)
-    # axis = trimesh.creation.axis(origin_size=0.1)  # You can adjust the size as needed
-    # scene.add_geometry(axis)
+    axis = trimesh.creation.axis(
+        origin_size=0.1
+    )  # You can adjust the size as needed
+    scene.add_geometry(axis)
     scene.show()
     return robot_link_mesh_map, robot_visual_map
 
@@ -278,6 +285,7 @@ def compute_bbox_transform(init_bbox, goal_bbox, align_direction, keep_ratio=Tru
         scaling_matrix[0, 0] = np.min(scale_factors)
         scaling_matrix[1, 1] = np.min(scale_factors)
         scaling_matrix[2, 2] = np.min(scale_factors)
+        scale_factors = np.min(scale_factors)
 
     # Compute translation
     translation = goal_center - robot_center * scale_factors
@@ -461,7 +469,7 @@ def render_object_into_block(data_id, data_dir, camera_info, on_list, under_list
     sample_type = "uniform"
     only_front = True
     keep_ratio = False
-    num_joint_values = 2
+    num_joint_values = 4
     cam_radius_min = 2.5
     cam_radius_max = 3.0
     light_radius_min = 3.0
@@ -508,17 +516,11 @@ def render_object_into_block(data_id, data_dir, camera_info, on_list, under_list
         predefined_light_poses.append(light_pose)
 
     rng = np.random.RandomState(0)
-    # Generate random set-up
-    data_ids, goal_bbox_list, align_direction_list = generate_block_setup(
-        data_id, on_list, under_list, rng
-    )
-
     for joint_idx in range(num_joint_values):
-        # robot = URDF.load(data_file)
-        # joint_cfg, link_cfg = generate_robot_cfg(robot, rng)
-        # robot_link_mesh_map, robot_visual_map, robot_mesh, robot_bbox = (
-        #     generate_robot_mesh(robot, joint_cfg)
-        # )
+        # Generate random set-up
+        data_ids, goal_bbox_list, align_direction_list = generate_block_setup(
+            data_id, on_list, under_list, rng
+        )
         robot_link_mesh_map, robot_visual_map = generate_robot_meshes(
             data_dir, data_ids, goal_bbox_list, align_direction_list, rng
         )
@@ -554,8 +556,9 @@ def render_object_into_block(data_id, data_dir, camera_info, on_list, under_list
 
 
 if __name__ == "__main__":
-    under_list = ["103351"]
-    on_list = ["920", "101564"]
+    under_list = ["103351", "40417"]
+    on_list = ["920", "101564", "152", "991", "103007", "103037"]
+    # on_list = ["152"]
 
     data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
     output_dir = "/home/harvey/Data/partnet-mobility-v0/output"
