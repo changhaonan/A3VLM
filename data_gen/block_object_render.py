@@ -1,5 +1,6 @@
 """Do object render as building blocks."""
 
+import json
 import os
 import cv2
 import copy
@@ -170,11 +171,11 @@ def generate_block_setup(data_id, on_list, under_list, rng=np.random.RandomState
         data_ids.append(data_id)
         goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[0]]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
-        # Second on
-        on_data_id = rng.choice(on_list)
-        data_ids.append(on_data_id)
-        goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[1]]))
-        align_direction_list.append(np.array([0.0, 0.0, -1.0]))
+        # # Second on
+        # on_data_id = rng.choice(on_list)
+        # data_ids.append(on_data_id)
+        # goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[1]]))
+        # align_direction_list.append(np.array([0.0, 0.0, -1.0]))
         # Select under object
         under_data_id = rng.choice(under_list)
         data_ids.append(under_data_id)
@@ -189,11 +190,11 @@ def generate_block_setup(data_id, on_list, under_list, rng=np.random.RandomState
         data_ids.append(on_data_id)
         goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[0]]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
-        # Second on
-        on_data_id = rng.choice(on_list)
-        data_ids.append(on_data_id)
-        goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[1]]))
-        align_direction_list.append(np.array([0.0, 0.0, -1.0]))
+        # # Second on
+        # on_data_id = rng.choice(on_list)
+        # data_ids.append(on_data_id)
+        # goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[1]]))
+        # align_direction_list.append(np.array([0.0, 0.0, -1.0]))
     return data_ids, goal_bbox_list, align_direction_list
 
 
@@ -240,6 +241,7 @@ def generate_robot_meshes(
 ):
     robot_link_mesh_map = {}
     robot_visual_map = {}
+    transform_list = []
     for idx, (data_id, goal_bbox, align_direction) in enumerate(
         zip(data_ids, goal_bbox_list, align_direction_list)
     ):
@@ -264,6 +266,7 @@ def generate_robot_meshes(
 
         robot_link_mesh_map.update(_robot_link_mesh_map)
         robot_visual_map.update(_robot_visual_map)
+        transform_list.append(transform)
     # # # [DEBUG]
     # scene = trimesh.Scene()
     # for mesh, (pose, name) in robot_visual_map.items():
@@ -271,7 +274,7 @@ def generate_robot_meshes(
     # axis = trimesh.creation.axis(origin_size=0.1)  # You can adjust the size as needed
     # scene.add_geometry(axis)
     # scene.show()
-    return robot_link_mesh_map, robot_visual_map
+    return robot_link_mesh_map, robot_visual_map, transform_list
 
 
 def compute_bbox_transform(
@@ -386,12 +389,13 @@ def render_parts_into_block(
     camera = pyrender.IntrinsicsCamera(fx=fx, fy=fy, cx=cx, cy=cy)
     r = pyrender.OffscreenRenderer(width, height)
 
-    # Do rendering
+    # Prepare data
     camera_node = None
     color_imgs = []
     depth_imgs = []
     mask_imgs = []
     annotations = []
+    # Do rendering
     for pose_idx in range(num_poses):
         image_idx = idx_func(pose_idx)
         camera_pose = predefined_camera_poses[image_idx]
@@ -419,7 +423,6 @@ def render_parts_into_block(
             for node in scene.mesh_nodes:
                 if node.mesh.name == "bg":
                     continue
-                segimg = np.zeros((height, width), dtype=np.uint8)
                 node.mesh.is_visible = True
                 # Parse link_idx
                 link_idx = int(node.mesh.name.split("_")[-1])
@@ -473,7 +476,7 @@ def render_parts_into_block(
                         "image_id": image_idx,
                         "id": link_idx,
                         "name": node.mesh.name,
-                        "camera_pose": camera_pose,
+                        "camera_pose": camera_pose.tolist(),
                     }
                     annotations.append(annotation)
             # Show all meshes again
@@ -482,7 +485,7 @@ def render_parts_into_block(
             # # [DEBUG]
             # plt.imshow(mask_img)
             # plt.show()
-            # mask_imgs.append(mask_img)
+            mask_imgs.append(mask_img)
     r.delete()
 
     return color_imgs, depth_imgs, mask_imgs, annotations
@@ -509,6 +512,15 @@ def render_object_into_block(
         "depth": np.zeros((num_samples, width, height), dtype=np.uint16),
         "mask": np.zeros((num_samples, width, height), dtype=np.uint8),
     }
+    info = {}
+    info["camera_info"] = camera_info
+    meta_file = f"{data_dir}/{data_name}/meta.json"
+    with open(meta_file, "r") as f:
+        meta = json.load(f)
+    info["model_cat"] = meta["model_cat"]
+    info["camera_poses"] = [None] * num_samples
+    info["obj_transforms"] = [None] * num_samples
+
     # Generate camera pose
     radius = 1.0
     cam_radius_min = radius * cam_radius_min  # Minimum distance from the look-at point
@@ -554,7 +566,7 @@ def render_object_into_block(
         data_ids, goal_bbox_list, align_direction_list = generate_block_setup(
             data_id, on_list, under_list, rng
         )
-        robot_link_mesh_map, robot_visual_map = generate_robot_meshes(
+        robot_link_mesh_map, robot_visual_map, transform_list = generate_robot_meshes(
             data_dir, data_ids, goal_bbox_list, align_direction_list, rng
         )
         # Render objects
@@ -590,9 +602,17 @@ def render_object_into_block(
             render_result["color"][image_idx] = color_img
             render_result["depth"][image_idx] = depth_img
             render_result["mask"][image_idx] = mask_img
-        render_result["annotations"] = annotations
+            # Append info
+            info["camera_poses"][image_idx] = predefined_camera_poses[image_idx].tolist()
+            info["obj_transforms"][image_idx] = transform_list[0].tolist()  # Only first object
     # Save results
-    np.savez_compressed(f"{output_dir}/render_result.npz", render_result)
+    np.savez_compressed(f"{output_dir}/color_imgs.npz", images=render_result["color"])
+    np.savez_compressed(f"{output_dir}/depth_imgs.npz", images=render_result["depth"])
+    np.savez_compressed(f"{output_dir}/mask_imgs.npz", images=render_result["mask"])
+    with open(f"{output_dir}/annotations.json", "w") as f:
+        json.dump(annotations, f)
+    with open(f"{output_dir}/info.json", "w") as f:
+        json.dump(info, f)
 
 
 if __name__ == "__main__":
