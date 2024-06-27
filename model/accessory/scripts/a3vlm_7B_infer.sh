@@ -27,11 +27,6 @@ llama_path="/mnt/petrelfs/XXXXX/data/llama2"
 llama_config="$llama_path"/7B/params.json
 tokenizer_path=$PATH_TO_PRETRAIN/tokenizer.model
 
-export OMP_NUM_THREADS=8
-export NCCL_LL_THRESHOLD=0
-export NCCL_P2P_DISABLE=1
-export NCCL_IB_DISABLE=1
-
 vqa_data=demo
 torchrun --nproc-per-node=1 --master_port=$PORT eval_affordance_v2.py \
     --llama_type ${MODEL} \
@@ -40,4 +35,4 @@ torchrun --nproc-per-node=1 --master_port=$PORT eval_affordance_v2.py \
     --pretrained_path ${pretrained_path} \
     --dataset ${vqa_data} \
     --batch_size 8 --input_size 448 \
-    --model_parallel_size 2 --addition_flag ${addition_flag} --remove_space 
+    --model_parallel_size 1 --addition_flag ${addition_flag} --remove_space 
