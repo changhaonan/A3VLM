@@ -73,7 +73,8 @@ def calculate_zy_rotation_for_arrow(vec):
 def get_arrow(end, origin=np.array([0, 0, 0]), scale=1.0, color=np.array([1, 0, 0])):
     import open3d as o3d
 
-    assert not np.all(end == origin)
+    if np.all(end == origin):
+        assert False, "Arrow end and origin are the same."
     vec = end - origin
     size = np.sqrt(np.sum(vec**2))
 
@@ -89,6 +90,30 @@ def get_arrow(end, origin=np.array([0, 0, 0]), scale=1.0, color=np.array([1, 0, 
     mesh.translate(origin)
     mesh.paint_uniform_color(color)
     return mesh
+
+
+def check_annotations_o3d(points, bbox_3d, axis_3d, points_mask, title=""):
+    import open3d as o3d
+    from matplotlib import pyplot as plt
+
+    bbox_3d = np.array(bbox_3d)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points[:, :3])
+    points_color = plt.get_cmap("tab20")(points_mask % 20)[:, :3]
+    pcd.colors = o3d.utility.Vector3dVector(points_color)
+    bbox = o3d.geometry.OrientedBoundingBox()
+    bbox.center = bbox_3d[0:3]
+    bbox.R = R.from_rotvec(bbox_3d[6:9]).as_matrix()
+    bbox.extent = bbox_3d[3:6]
+    bbox.color = [1, 0, 0]
+
+    axis_points = np.array(axis_3d).reshape(2, 3)
+    arrow_o3d = get_arrow(axis_points[1], axis_points[0], scale=1, color=[1, 0, 0])
+    origin = o3d.geometry.TriangleMesh.create_coordinate_frame(
+        size=0.3, origin=[0, 0, 0]
+    )
+    print(title)
+    o3d.visualization.draw_geometries([pcd, bbox, arrow_o3d, origin])
 
 
 def get_rotated_box(cx, cy, w, h, angle):
@@ -268,6 +293,7 @@ class AxisBBox3D:
         self.center = (min_bound + max_bound) / 2
         self.extent = max_bound - min_bound
         self.R = np.eye(3)
+        self.axis = np.array([[0, 0, max_bound[2]], [0, 0, min_bound[2]]])
 
     def create_minimum_axis_aligned_bbox(self, points):
         import open3d as o3d
@@ -296,6 +322,9 @@ class AxisBBox3D:
         center_xy = np.mean(rect_coords[:4, :], axis=0)
         min_z = np.min(points[:, 2])
         max_z = np.max(points[:, 2])
+        if np.abs(max_z - min_z) < 0.01:
+            max_z += 0.01
+            min_z -= 0.01
         center = np.array([center_xy[0], center_xy[1], (min_z + max_z) / 2])
         x_axis = np.array([longest_edge[0], longest_edge[1], 0])
         z_axis = np.array([0, 0, max_z - min_z])

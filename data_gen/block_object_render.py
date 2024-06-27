@@ -9,9 +9,69 @@ import trimesh
 import numpy as np
 from urchin import URDF
 from matplotlib import pyplot as plt
+from utils import AxisBBox3D, get_arrow, check_annotations_o3d
 
 
 ################################ Utility functions ################################
+def get_pointcloud(
+    color,
+    depth,
+    mask,
+    intrinsic,
+    sample_size=-1,
+    flip_x: bool = False,
+    flip_y: bool = False,
+):
+    """Get pointcloud from perspective depth image and color image.
+
+    Args:
+      color: HxWx3 uint8 array of RGB images.
+      depth: HxW float array of perspective depth in meters.
+      mask: HxW uint8 array of mask images.
+      intrinsics: 3x3 float array of camera intrinsics matrix.
+
+    Returns:
+      points: HxWx3 float array of 3D points in camera coordinates.
+    """
+
+    height, width = depth.shape
+    xlin = np.linspace(0, width - 1, width)
+    ylin = np.linspace(0, height - 1, height)
+    px, py = np.meshgrid(xlin, ylin)
+    if flip_x:
+        px = width - 1 - px
+    if flip_y:
+        py = height - 1 - py
+    px = (px - intrinsic[0, 2]) * (depth / intrinsic[0, 0])
+    py = (py - intrinsic[1, 2]) * (depth / intrinsic[1, 1])
+    # Stack the coordinates and reshape
+    points = np.float32([px, py, depth]).transpose(1, 2, 0).reshape(-1, 3)
+
+    # Assuming color image is in the format height x width x 3 (RGB)
+    # Reshape color image to align with points
+    colors = color.reshape(-1, 3)
+    masks = mask.reshape(-1, 1)
+    pcolors = np.hstack((points, colors, masks))
+    pcolors = pcolors[pcolors[:, 0] != 0.0, :]
+    if pcolors.shape[0] == 0:
+        return None, 0
+
+    points = pcolors[:, :3]
+    colors = pcolors[:, 3:6]
+    masks = pcolors[:, 6]
+
+    # Sample points
+    if points.shape[0] > sample_size and sample_size > 0:
+        num_points = points.shape[0]
+        indices = np.random.choice(num_points, sample_size, replace=False)
+        points = points[indices]
+        colors = colors[indices]
+        masks = masks[indices]
+
+    # return pcd_with_color
+    return points, colors, masks
+
+
 def sample_camera_pose(
     cam_radius_min: float,
     cam_radius_max: float,
@@ -241,7 +301,7 @@ def generate_robot_meshes(
 ):
     robot_link_mesh_map = {}
     robot_visual_map = {}
-    transform_list = []
+    obj_transforms = []
     for idx, (data_id, goal_bbox, align_direction) in enumerate(
         zip(data_ids, goal_bbox_list, align_direction_list)
     ):
@@ -266,23 +326,28 @@ def generate_robot_meshes(
 
         robot_link_mesh_map.update(_robot_link_mesh_map)
         robot_visual_map.update(_robot_visual_map)
-        transform_list.append(transform)
-    # # [DEBUG]
-    articulation_info = read_articulation(data_dir, data_ids[0])
-    scene = trimesh.Scene()
-    for mesh, (pose, name) in robot_link_mesh_map.items():
-        scene.add_geometry(mesh)
-    for id, info in articulation_info.items():
-        axis = trimesh.creation.axis(origin_size=0.1)
-        axis_origin = info["axis_origin"]
-        axis_origin = np.array([-axis_origin[2], -axis_origin[0], axis_origin[1]])
-        transform = transform_list[0]
-        axis_origin = transform[:3, :3] @ axis_origin + transform[:3, 3]
-        axis.apply_translation(axis_origin)
-        scene.add_geometry(axis)
-    scene.show()
+        obj_transforms.append(transform)
+    # # # [DEBUG]
+    # articulation_info = read_articulation(data_dir, data_ids[0])
+    # scene = trimesh.Scene()
+    # for mesh, (pose, name) in robot_link_mesh_map.items():
+    #     scene.add_geometry(mesh)
+    # for id, _info in articulation_info.items():
+    #     axis = trimesh.creation.axis(origin_size=0.1)
+    #     axis_origin = _info["axis_origin"]
+    #     axis_origin = np.array([-axis_origin[2], -axis_origin[0], axis_origin[1]])
+    #     transform = obj_transforms[0]
+    #     axis_origin = transform[:3, :3] @ axis_origin + transform[:3, 3]
+    #     print(f"V0: {id}: {axis_origin}")
+    #     axis.apply_translation(axis_origin)
+    #     scene.add_geometry(axis)
+    # # Add a sphere at [-0.5, 0.0, 0.0]
+    # sphere = trimesh.creation.uv_sphere(radius=0.05)
+    # sphere.apply_translation([-0.5, 0.0, 0.0])
+    # scene.add_geometry(sphere)
+    # scene.show()
 
-    return robot_link_mesh_map, robot_visual_map, transform_list
+    return robot_link_mesh_map, robot_visual_map, obj_transforms
 
 
 def compute_bbox_transform(
@@ -368,7 +433,9 @@ def read_articulation(data_dir, data_name):
                         "semantic": parts[2],
                     }
                 )
-    articulate_info = {}
+    articulation_info = {
+        "id_map": {},
+    }
     for link_idx, link_data in enumerate(joint_info):
         if "jointData" in link_data and link_data["jointData"]:
             joint_type = semantic_data[link_idx]["joint_type"]
@@ -376,11 +443,113 @@ def read_articulation(data_dir, data_name):
                 continue
             axis_origin = link_data["jointData"]["axis"]["origin"]
             axis_direction = link_data["jointData"]["axis"]["direction"]
-            articulate_info[link_data["id"]] = {
+            articulation_info[link_data["id"]] = {
                 "axis_origin": np.array(axis_origin),
                 "axis_direction": np.array(axis_direction),
+                "name": link_data["name"],
             }
-    return articulate_info
+            articulation_info["id_map"][link_idx] = link_data["id"]
+    return articulation_info
+
+
+def generater_label_3d(
+    color_imgs,
+    depth_imgs,
+    mask_imgs,
+    camera_poses,
+    obj_transforms,
+    camera_info,
+    articulation_info,
+):
+    sample_size = -1
+    fx = camera_info["fx"]
+    fy = camera_info["fy"]
+    cx = camera_info["cx"]
+    cy = camera_info["cy"]
+    intrinsic = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
+    fix_func = lambda v: np.array([x if x is not None else 0 for x in v])
+
+    label_3ds = []
+    # Generate pcd
+    for image_idx in range(len(color_imgs)):
+        label_3d = {}
+        # Align mask to articulation info
+        mask = mask_imgs[image_idx]
+        new_mask = np.ones_like(mask) * 255
+        for mask_id in np.unique(mask):
+            if mask_id == 0:
+                continue
+            mask_i = mask == mask_id
+            if np.sum(mask_i) > 0 and (mask_id - 1) in articulation_info["id_map"]:
+                new_id = int(articulation_info["id_map"][mask_id - 1])
+                new_mask[mask_i] = new_id
+        color = color_imgs[image_idx]
+        depth = (depth_imgs[image_idx] / 1000.0).astype(np.float32)
+        points, colors, masks = get_pointcloud(
+            color,
+            -depth,
+            new_mask,
+            intrinsic,
+            sample_size,
+            flip_x=True,
+        )
+        camera_pose = camera_poses[image_idx]
+        for id, _info in articulation_info.items():
+            if not isinstance(id, int):
+                continue
+            axis_origin = fix_func(_info["axis_origin"])
+            axis_origin = np.array([-axis_origin[2], -axis_origin[0], axis_origin[1]])
+            axis_direction = fix_func(_info["axis_direction"])
+            axis_direction = np.array(
+                [-axis_direction[2], -axis_direction[0], axis_direction[1]]
+            )
+            obj_transform = np.array(obj_transforms[image_idx])
+            axis_origin = obj_transform[:3, :3] @ axis_origin + obj_transform[:3, 3]
+            axis_direction = obj_transform[:3, :3] @ axis_direction
+            axis_direction = axis_direction / np.linalg.norm(axis_direction + 1e-6)
+            # Assemble joint_T
+            j_axis_z = axis_direction
+            j_axis_x = (
+                np.array([1.0, 0.0, 0.0])
+                if np.abs(j_axis_z[0]) < 0.9
+                else np.array([0.0, 1.0, 0.0])
+            )
+            j_axis_y = np.cross(j_axis_z, j_axis_x)
+            j_axis_y = j_axis_y / (np.linalg.norm(j_axis_y) + 1e-6)
+            j_axis_x = np.cross(j_axis_y, j_axis_z)
+            j_axis_x = j_axis_x / (np.linalg.norm(j_axis_x) + 1e-6)
+            joint_R = np.array([j_axis_x, j_axis_y, j_axis_z]).T
+            j_T = np.eye(4)
+            j_T[:3, :3] = joint_R
+            j_T[:3, 3] = axis_origin
+            j_T = np.linalg.inv(camera_pose) @ j_T
+            j_T_inv = np.linalg.inv(j_T)
+
+            points_j = points[np.where(masks == id)[0]]
+            points_j = points_j @ j_T_inv[:3, :3].T + j_T_inv[:3, 3]
+            # Generate 3D bbox
+            bbox = AxisBBox3D()
+            if points_j.shape[0] >= 8:
+                bbox.create_minimum_projected_bbox(points_j)
+            else:
+                continue
+            bbox.rotate(j_T[:3, :3], (0, 0, 0))
+            bbox.translate(j_T[:3, 3])
+            bbox_array = bbox.get_bbox_array()
+            axis_array = bbox.get_axis_array()
+            label_3d[id] = {
+                "bbox": bbox_array.tolist(),
+                "axis": axis_array.tolist(),
+                "name": _info["name"],
+                "image_idx": image_idx,
+                "camera_pose": camera_pose,
+            }
+            # [DEBUG]
+            masks[masks == 255] = 20
+            masks = masks.astype(np.uint8)
+            check_annotations_o3d(points, bbox_array, axis_array, masks)
+        label_3ds.append(label_3d)
+    return label_3ds
 
 
 ################################ Render functions ################################
@@ -412,9 +581,7 @@ def render_parts_into_block(
             # Use a random color for the link mesh
             color = np.random.rand(3)
             pymesh.primitives[0].material.baseColorFactor = color
-        # pose[:3, 3] = transform[:3, :3] @ pose[:3, 3] + transform[:3, 3]
-        pose = np.eye(4)
-        mesh_node = scene.add(pymesh, pose=pose)
+        mesh_node = scene.add(pymesh, pose=np.eye(4))
 
         # Compute center
         mesh_pose = mesh_node.matrix
@@ -447,88 +614,47 @@ def render_parts_into_block(
         camera_node = scene.add(camera, pose=np.array(camera_pose))
 
         # Render color image
+        flags = pyrender.RenderFlags.RGBA
+        color, _ = r.render(scene, flags=flags)
+        color_imgs.append(color[:, :, :3])
+
         if not is_link_map:
-            flags = pyrender.RenderFlags.RGBA
-            color, depth = r.render(scene, flags=flags)
-            color_imgs.append(color)
-        else:
-            # Render the depth of the whole scene
-            flags = pyrender.RenderFlags.DEPTH_ONLY
-            full_depth = r.render(scene, flags=flags)
-            depth_imgs.append(full_depth)
+            continue
+        # Render the depth of the whole scene
+        flags = pyrender.RenderFlags.DEPTH_ONLY
+        full_depth = r.render(scene, flags=flags)
+        depth_imgs.append(full_depth)
 
-            mask_img = np.zeros((height, width), dtype=np.uint8)
-            # Hide all mesh nodes
-            for mn in scene.mesh_nodes:
-                mn.mesh.is_visible = False
+        mask = np.zeros((height, width), dtype=np.uint8)
+        # Hide all mesh nodes
+        for mn in scene.mesh_nodes:
+            mn.mesh.is_visible = False
 
-            # Iterate through each mesh node
-            for node in scene.mesh_nodes:
-                if node.mesh.name == "bg":
-                    continue
-                node.mesh.is_visible = True
-                # Parse link_idx
-                link_idx = int(node.mesh.name.split("_")[-1])
-                # Part center: Average of all vertices
-                center_3d = mesh_name_dict[node.mesh.name]
-                # Compute mask & bbox
-                depth = r.render(scene, flags=flags)
-                mask_vis = np.logical_and(depth <= full_depth, np.abs(depth) > 0)
-                mask_all = np.abs(depth) > 0
-                vis_ratio = mask_vis.sum() / (mask_all.sum() + 1e-6)
-
-                if np.any(mask_vis):
-                    # Extract a rotating bbox from mask
-                    contours, _ = cv2.findContours(
-                        mask_vis.astype(np.uint8),
-                        cv2.RETR_EXTERNAL,
-                        cv2.CHAIN_APPROX_SIMPLE,
-                    )
-                    # Find the largest contour based on area
-                    largest_contour = max(contours, key=cv2.contourArea)
-
-                    # Compute the minimal area bounding box for the largest contour
-                    rect = cv2.minAreaRect(largest_contour)
-
-                    y, x = np.where(mask_vis)
-                    x_min, x_max = x.min(), x.max()
-                    y_min, y_max = y.min(), y.max()
-
-                    area = int((x_max - x_min) * (y_max - y_min))
-                    node.mesh.is_visible = False
-
-                    # Save annotation
-                    mask_img[mask_vis] = link_idx + 1
-                    annotation = {
-                        "bbox": [
-                            int(x_min),
-                            int(y_min),
-                            int(x_max - x_min),
-                            int(y_max - y_min),
-                        ],
-                        "rot_bbox": [
-                            rect[0][0],
-                            rect[0][1],
-                            rect[1][0],
-                            rect[1][1],
-                            rect[2],
-                        ],
-                        "area": area,
-                        "vis_ratio": vis_ratio,
-                        "center_3d": center_3d.tolist(),
-                        "image_id": image_idx,
-                        "id": link_idx,
-                        "name": node.mesh.name,
-                        "camera_pose": camera_pose.tolist(),
-                    }
-                    annotations.append(annotation)
-            # Show all meshes again
-            for mn in scene.mesh_nodes:
-                mn.mesh.is_visible = True
-            # # [DEBUG]
-            # plt.imshow(mask_img)
-            # plt.show()
-            mask_imgs.append(mask_img)
+        # Iterate through each mesh node
+        for node in scene.mesh_nodes:
+            if node.mesh.name == "bg":
+                continue
+            node.mesh.is_visible = True
+            # Parse link_idx
+            link_idx = int(node.mesh.name.split("_")[-1])
+            # Part center: Average of all vertices
+            center_3d = mesh_name_dict[node.mesh.name]
+            # Compute mask & bbox
+            depth = r.render(scene, flags=flags)
+            mask_vis = np.logical_and(depth <= full_depth, np.abs(depth) > 0)
+            mask_all = np.abs(depth) > 0
+            vis_ratio = mask_vis.sum() / (mask_all.sum() + 1e-6)
+            if vis_ratio > 0.1:
+                # Only consider visible parts
+                mask[mask_vis] = link_idx + 1
+            node.mesh.is_visible = False
+        # Show all meshes again
+        for mn in scene.mesh_nodes:
+            mn.mesh.is_visible = True
+        # # [DEBUG]
+        # plt.imshow(mask_img)
+        # plt.show()
+        mask_imgs.append(mask)
     r.delete()
 
     return color_imgs, depth_imgs, mask_imgs, annotations
@@ -551,7 +677,7 @@ def render_object_into_block(
     width = camera_info["width"]
     height = camera_info["height"]
     render_result = {
-        "color": np.zeros((num_samples, width, height, 4), dtype=np.uint8),
+        "color": np.zeros((num_samples, width, height, 3), dtype=np.uint8),
         "depth": np.zeros((num_samples, width, height), dtype=np.uint16),
         "mask": np.zeros((num_samples, width, height), dtype=np.uint8),
     }
@@ -603,13 +729,15 @@ def render_object_into_block(
             light_pose[:3, 3] = np.array([0.0, 0.0, light_radius])
         predefined_light_poses.append(light_pose)
 
+    # Read articulation informtation
+    articulation_info = read_articulation(data_dir, data_id)
     rng = np.random.RandomState(0)
     for joint_idx in range(num_joint_values):
         # Generate random set-up
         data_ids, goal_bbox_list, align_direction_list = generate_block_setup(
             data_id, on_list, under_list, rng
         )
-        robot_link_mesh_map, robot_visual_map, transform_list = generate_robot_meshes(
+        robot_link_mesh_map, robot_visual_map, obj_transforms = generate_robot_meshes(
             data_dir, data_ids, goal_bbox_list, align_direction_list, rng
         )
         # Render objects
@@ -642,22 +770,33 @@ def render_object_into_block(
             color_img = cv2.cvtColor(color_imgs[pose_idx], cv2.COLOR_RGBA2BGRA)
             depth_img = (depth_imgs[pose_idx] * 1000).astype(np.uint16)
             mask_img = mask_imgs[pose_idx]
-            render_result["color"][image_idx] = color_img.astype(np.uint8)
+            render_result["color"][image_idx] = color_img[:, :, :3].astype(np.uint8)
             render_result["depth"][image_idx] = depth_img.astype(np.uint16)
             render_result["mask"][image_idx] = mask_img.astype(np.uint8)
             # Append info
             info["camera_poses"][image_idx] = predefined_camera_poses[
                 image_idx
             ].tolist()
-            info["obj_transforms"][image_idx] = transform_list[
+            info["obj_transforms"][image_idx] = obj_transforms[
                 0
             ].tolist()  # Only first object
+
+    # Generate labels for the scene
+    label_3ds = generater_label_3d(
+        render_result["color"],
+        render_result["depth"],
+        render_result["mask"],
+        info["camera_poses"],
+        info["obj_transforms"],
+        camera_info,
+        articulation_info,
+    )
     # Save results
     np.savez_compressed(f"{output_dir}/color_imgs.npz", images=render_result["color"])
     np.savez_compressed(f"{output_dir}/depth_imgs.npz", images=render_result["depth"])
     np.savez_compressed(f"{output_dir}/mask_imgs.npz", images=render_result["mask"])
-    with open(f"{output_dir}/annotations.json", "w") as f:
-        json.dump(annotations, f)
+    with open(f"{output_dir}/annotations_3d.json", "w") as f:
+        json.dump(label_3ds, f)
     with open(f"{output_dir}/info.json", "w") as f:
         json.dump(info, f)
 
@@ -669,7 +808,7 @@ if __name__ == "__main__":
 
     data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
     output_dir = "/home/harvey/Data/partnet-mobility-v0/output"
-    data_name = "920"  #
+    data_name = "103351"  #
     data_file = f"{data_dir}/{data_name}/mobility.urdf"
     output_dir = f"{output_dir}/{data_name}"
     camera_info = {
@@ -677,8 +816,8 @@ if __name__ == "__main__":
         "fy": 1000,
         "cx": 480,
         "cy": 480,
-        "width": 1000,
-        "height": 1000,
+        "width": 960,
+        "height": 960,
     }
     os.makedirs(os.path.join(output_dir, "color_test"), exist_ok=True)
 
