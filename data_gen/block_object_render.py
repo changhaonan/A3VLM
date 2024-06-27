@@ -199,7 +199,7 @@ def generate_block_setup(data_id, on_list, under_list, rng=np.random.RandomState
 
 
 def generate_robot_mesh(
-    robot: URDF, joint_cfg: dict, goal_bbox, align_dir, is_bg_obj=False
+    data_id, robot: URDF, joint_cfg: dict, goal_bbox, align_dir, is_bg_obj=False
 ):
     """Generate trimesh for different part."""
     # Save current robot mesh as obj
@@ -252,7 +252,7 @@ def generate_robot_meshes(
         robot = URDF.load(data_file)
         joint_cfg, link_cfg = generate_robot_cfg(robot, rng, is_bg_obj)
         _robot_link_mesh_map, _robot_visual_map, robot_bbox = generate_robot_mesh(
-            robot, joint_cfg, goal_bbox, align_direction, is_bg_obj
+            data_id, robot, joint_cfg, goal_bbox, align_direction, is_bg_obj
         )
 
         # Compute bbox & transform
@@ -267,13 +267,21 @@ def generate_robot_meshes(
         robot_link_mesh_map.update(_robot_link_mesh_map)
         robot_visual_map.update(_robot_visual_map)
         transform_list.append(transform)
-    # # # [DEBUG]
-    # scene = trimesh.Scene()
-    # for mesh, (pose, name) in robot_visual_map.items():
-    #     scene.add_geometry(mesh)
-    # axis = trimesh.creation.axis(origin_size=0.1)  # You can adjust the size as needed
-    # scene.add_geometry(axis)
-    # scene.show()
+    # # [DEBUG]
+    articulation_info = read_articulation(data_dir, data_ids[0])
+    scene = trimesh.Scene()
+    for mesh, (pose, name) in robot_link_mesh_map.items():
+        scene.add_geometry(mesh)
+    for id, info in articulation_info.items():
+        axis = trimesh.creation.axis(origin_size=0.1)
+        axis_origin = info["axis_origin"]
+        axis_origin = np.array([-axis_origin[2], -axis_origin[0], axis_origin[1]])
+        transform = transform_list[0]
+        axis_origin = transform[:3, :3] @ axis_origin + transform[:3, 3]
+        axis.apply_translation(axis_origin)
+        scene.add_geometry(axis)
+    scene.show()
+
     return robot_link_mesh_map, robot_visual_map, transform_list
 
 
@@ -338,6 +346,41 @@ def compute_bbox_transform(
 
     transform_matrix = np.dot(align_transform, transform_matrix)
     return transform_matrix
+
+
+def read_articulation(data_dir, data_name):
+    # Load joint info
+    joint_info_file = os.path.join(output_dir, "mobility_v2.json")
+    joint_info = json.load(open(joint_info_file))
+    # Filterout junk data
+    joint_info = [joint for joint in joint_info if joint["joint"] != "junk"]
+    # Load semantic info
+    semantic_data = []
+    semantic_file = os.path.join(output_dir, "semantics.txt")
+    with open(semantic_file, "r") as file:
+        for line in file:
+            parts = line.strip().split(" ")
+            if len(parts) == 3:
+                semantic_data.append(
+                    {
+                        "link_name": parts[0],
+                        "joint_type": parts[1],
+                        "semantic": parts[2],
+                    }
+                )
+    articulate_info = {}
+    for link_idx, link_data in enumerate(joint_info):
+        if "jointData" in link_data and link_data["jointData"]:
+            joint_type = semantic_data[link_idx]["joint_type"]
+            if joint_type in ["fixed", "free", "heavy"]:
+                continue
+            axis_origin = link_data["jointData"]["axis"]["origin"]
+            axis_direction = link_data["jointData"]["axis"]["direction"]
+            articulate_info[link_data["id"]] = {
+                "axis_origin": np.array(axis_origin),
+                "axis_direction": np.array(axis_direction),
+            }
+    return articulate_info
 
 
 ################################ Render functions ################################
@@ -599,12 +642,16 @@ def render_object_into_block(
             color_img = cv2.cvtColor(color_imgs[pose_idx], cv2.COLOR_RGBA2BGRA)
             depth_img = (depth_imgs[pose_idx] * 1000).astype(np.uint16)
             mask_img = mask_imgs[pose_idx]
-            render_result["color"][image_idx] = color_img
-            render_result["depth"][image_idx] = depth_img
-            render_result["mask"][image_idx] = mask_img
+            render_result["color"][image_idx] = color_img.astype(np.uint8)
+            render_result["depth"][image_idx] = depth_img.astype(np.uint16)
+            render_result["mask"][image_idx] = mask_img.astype(np.uint8)
             # Append info
-            info["camera_poses"][image_idx] = predefined_camera_poses[image_idx].tolist()
-            info["obj_transforms"][image_idx] = transform_list[0].tolist()  # Only first object
+            info["camera_poses"][image_idx] = predefined_camera_poses[
+                image_idx
+            ].tolist()
+            info["obj_transforms"][image_idx] = transform_list[
+                0
+            ].tolist()  # Only first object
     # Save results
     np.savez_compressed(f"{output_dir}/color_imgs.npz", images=render_result["color"])
     np.savez_compressed(f"{output_dir}/depth_imgs.npz", images=render_result["depth"])
