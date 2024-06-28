@@ -34,7 +34,9 @@ os.makedirs(processed_imgs_track_folder, exist_ok=True)
 
 
 class DepthControl(Dataset):
-    def __init__(self, dataset_csv, splits=None, split_idx=None, reuse=True, modality="depth") -> None:
+    def __init__(
+        self, dataset_csv, splits=None, split_idx=None, reuse=True, modality="depth"
+    ) -> None:
         assert modality in ["depth", "seg"]
         self.modality = modality
         with open(dataset_csv, "r") as f:
@@ -50,14 +52,25 @@ class DepthControl(Dataset):
 
         print(f"Use {modality} modality.")
         # sort the csv by dataset_id and img_index
-        self.dataset = sorted(self.dataset, key=lambda x: (int(x["dataset_id"]), int(x["img_index"])))
+        self.dataset = sorted(
+            self.dataset, key=lambda x: (int(x["dataset_id"]), int(x["img_index"]))
+        )
 
         if splits is not None:
             assert split_idx is not None
-            self.dataset = self.dataset[len(self.dataset) * split_idx // splits : len(self.dataset) * (split_idx + 1) // splits]
+            self.dataset = self.dataset[
+                len(self.dataset)
+                * split_idx
+                // splits : len(self.dataset)
+                * (split_idx + 1)
+                // splits
+            ]
 
         print(f"Complete Dataset length: {len(self.dataset)}")
-        processed_imgs_track_split = os.path.join(processed_imgs_track_folder, f"processed_imgs_track_{split_idx}_{modality}.txt")
+        processed_imgs_track_split = os.path.join(
+            processed_imgs_track_folder,
+            f"processed_imgs_track_{split_idx}_{modality}.txt",
+        )
         if os.path.exists(processed_imgs_track_split):
             with open(processed_imgs_track_split, "r") as f:
                 processed_images = set(line.strip() for line in f)
@@ -84,10 +97,15 @@ class DepthControl(Dataset):
                 if item_class not in self.seg_category:
                     continue
 
-            img_save_path = depth_img_path.replace("depth_images", f"controlnet_images_{self.modality}")
+            img_save_path = depth_img_path.replace(
+                "depth_images", f"controlnet_images_{self.modality}"
+            )
             # when already rendered, skip
             img_save_folder = Path(img_save_path).parent
-            if os.path.exists(img_save_folder) and len(os.listdir(img_save_folder)) > 155:
+            if (
+                os.path.exists(img_save_folder)
+                and len(os.listdir(img_save_folder)) > 155
+            ):
                 print(f"Skip {img_save_folder}")
                 continue
             filtered_dataset.append(item)
@@ -113,7 +131,9 @@ class DepthControl(Dataset):
     @staticmethod
     def add_color_to_mask(mask_img, color_palette=palette):
         mask = np.asarray(mask_img)[:, :, 0]
-        color_seg = np.zeros((mask.shape[0], mask.shape[1], 3), dtype=np.uint8)  # height, width, 3
+        color_seg = np.zeros(
+            (mask.shape[0], mask.shape[1], 3), dtype=np.uint8
+        )  # height, width, 3
         for label, color in enumerate(palette):
             color_seg[mask == label, :] = color
         return color_seg
@@ -122,7 +142,11 @@ class DepthControl(Dataset):
 def get_controlnet_pipeline(checkpoint="lllyasviel/control_v11f1p_sd15_depth"):
     print(f"Loading checkpoint: {checkpoint}")
     controlnet = ControlNetModel.from_pretrained(checkpoint, torch_dtype=torch.float16)
-    pipe = StableDiffusionControlNetPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", controlnet=controlnet, torch_dtype=torch.float16)
+    pipe = StableDiffusionControlNetPipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5",
+        controlnet=controlnet,
+        torch_dtype=torch.float16,
+    )
     pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
     pipe.enable_model_cpu_offload()
     return pipe
@@ -130,13 +154,23 @@ def get_controlnet_pipeline(checkpoint="lllyasviel/control_v11f1p_sd15_depth"):
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--modality", type=str, default="seg", choices=["depth", "seg"])
+    argparser.add_argument(
+        "--modality", type=str, default="seg", choices=["depth", "seg"]
+    )
     argparser.add_argument("--batch_size", type=int, default=2)
     argparser.add_argument("--num_images_per_prompt", type=int, default=4)
-    argparser.add_argument("--split_idx", type=int, default=0, help="The split index of the dataset")
-    argparser.add_argument("--splits", type=int, default=12, help="The number of splits of the dataset")
-    argparser.add_argument("--dataset_csv", type=str, default="partnet_pyrender_dataset_v4.csv")
-    argparser.add_argument("--reuse", action="store_true", help="Whether to reuse the processed images")
+    argparser.add_argument(
+        "--split_idx", type=int, default=0, help="The split index of the dataset"
+    )
+    argparser.add_argument(
+        "--splits", type=int, default=12, help="The number of splits of the dataset"
+    )
+    argparser.add_argument(
+        "--dataset_csv", type=str, default="partnet_pyrender_dataset_v4.csv"
+    )
+    argparser.add_argument(
+        "--reuse", action="store_true", help="Whether to reuse the processed images"
+    )
     args = argparser.parse_args()
 
     checkpoints = {
@@ -148,18 +182,33 @@ if __name__ == "__main__":
     replace_path = {"depth": "depth_images", "seg": "mask"}
     original_path = replace_path[args.modality]
 
-    target_path = "controlnet_images" if args.modality == "depth" else f"controlnet_images_{args.modality}"
+    target_path = (
+        "controlnet_images"
+        if args.modality == "depth"
+        else f"controlnet_images_{args.modality}"
+    )
 
     batch_size = args.batch_size
     num_workers = 4
     num_images_per_prompt = args.num_images_per_prompt
     split_idx = args.split_idx
-    processed_imgs_track_split = os.path.join(processed_imgs_track_folder, f"processed_imgs_track_{split_idx}_{args.modality}.txt")
+    processed_imgs_track_split = os.path.join(
+        processed_imgs_track_folder,
+        f"processed_imgs_track_{split_idx}_{args.modality}.txt",
+    )
     pipe = get_controlnet_pipeline(checkpoint)
 
     dataset_csv = args.dataset_csv
-    dataset = DepthControl(dataset_csv, split_idx=split_idx, reuse=args.reuse, splits=args.splits, modality=args.modality)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    dataset = DepthControl(
+        dataset_csv,
+        split_idx=split_idx,
+        reuse=args.reuse,
+        splits=args.splits,
+        modality=args.modality,
+    )
+    dataloader = DataLoader(
+        dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers
+    )
     generator = torch.manual_seed(0)
 
     save_interval = 10  # Save captions every 10 batches
@@ -167,7 +216,14 @@ if __name__ == "__main__":
     processed_imgs = []
     for i, data in tqdm(enumerate(dataloader), total=len(dataloader)):
         dataset_id, img_index, depth_img, texture_description, img_path = data
-        images = pipe(list(texture_description), num_inference_steps=30, generator=generator, image=depth_img, num_images_per_prompt=num_images_per_prompt, batch_size=batch_size).images
+        images = pipe(
+            list(texture_description),
+            num_inference_steps=30,
+            generator=generator,
+            image=depth_img,
+            num_images_per_prompt=num_images_per_prompt,
+            batch_size=batch_size,
+        ).images
         images_per_depth_image = len(images) // len(depth_img)
         for p in img_path:
             processed_imgs.append(p)
@@ -177,14 +233,18 @@ if __name__ == "__main__":
             depth_image_idx = idx_ // images_per_depth_image
             render_img_idx = idx_ % images_per_depth_image
 
-            img_save_path = img_path[depth_image_idx].replace(original_path, target_path)
+            img_save_path = img_path[depth_image_idx].replace(
+                original_path, target_path
+            )
             #
             img_save_path = Path(img_save_path).parent
             if not os.path.exists(img_save_path):
                 os.makedirs(img_save_path)
             if i == 0:
                 print(f"DEBUG: Saving to {img_save_path}")
-            image.save(f"{img_save_path}/{img_index[depth_image_idx]}_{render_img_idx}.png")
+            image.save(
+                f"{img_save_path}/{img_index[depth_image_idx]}_{render_img_idx}.png"
+            )
 
         batch_counter += 1
         if batch_counter % save_interval == 0:

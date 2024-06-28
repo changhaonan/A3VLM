@@ -249,25 +249,24 @@ def generate_block_updown_setup(
     data_ids = []
     if data_id in on_list:
         on_bbox_list = [
-            [[0.0, 0.0, 0.0], [0.5, 0.5, 1.0]],
-            [[-0.5, 0.0, 0.0], [0.0, 0.5, 1.0]],
-            [[0.0, -0.5, 0.0], [0.5, 0.0, 1.0]],
-            [[-0.5, -0.5, 0.0], [0.0, 0.0, 1.0]],
+            [[0.0, 0.0, 0.0], [0.5, 0.5, 0.6]],
+            [[-0.5, 0.0, 0.0], [0.0, 0.5, 0.6]],
+            [[0.0, -0.5, 0.0], [0.5, 0.0, 0.6]],
+            [[-0.5, -0.5, 0.0], [0.0, 0.0, 0.6]],
         ]
         on_bbox_idxs = rng.choice(len(on_bbox_list), 2, replace=False)
         # First on
         data_ids.append(data_id)
         goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[0]]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
-        # # Second on
-        # on_data_id = rng.choice(on_list)
-        # data_ids.append(on_data_id)
-        # goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[1]]))
-        # align_direction_list.append(np.array([0.0, 0.0, -1.0]))
-        # Select under object
         under_data_id = rng.choice(under_list)
+        obj_bbox = np.array(meta_info["meta"][under_data_id]["bbox"])
+        obj_size = obj_bbox[1] - obj_bbox[0]
+        scale_factor = np.max(1.2 / obj_size)  # Support expand a little more than 1.0
         data_ids.append(under_data_id)
-        goal_bbox_list.append(np.array([[-0.5, -0.5, 0.0], [0.5, 0.5, -2.0]]))
+        goal_bbox = scale_factor * obj_bbox
+        goal_bbox[:, 2] -= np.max(goal_bbox[:, 2])
+        goal_bbox_list.append(goal_bbox)
         align_direction_list.append(np.array([0.0, 0.0, 1.0]))
     elif data_id in under_list:
         data_ids.append(data_id)
@@ -296,11 +295,6 @@ def generate_block_updown_setup(
         data_ids.append(on_data_id)
         goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[0]]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
-        # Second on
-        # on_data_id = rng.choice(on_list)
-        # data_ids.append(on_data_id)
-        # goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[1]]))
-        # align_direction_list.append(np.array([0.0, 0.0, -1.0]))
     elif data_id in other_list:
         # If the object is not in the on_list or under_list, it is a standalone object
         goal_bbox_list.append(np.array([[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]]))
@@ -323,7 +317,8 @@ def generate_robot_mesh(
             link_mesh.apply_transform(link_pose)
     robot_visual_map = {}
     for mesh, pose in robot.visual_trimesh_fk(cfg=joint_cfg).items():
-        robot_visual_map[mesh] = (pose, "visual")
+        name = "visual" if not is_bg_obj else "bg"
+        robot_visual_map[mesh] = (pose, name)
         mesh.apply_transform(pose)
 
     # Merged mesh
@@ -434,17 +429,21 @@ def compute_bbox_transform(
         scaling_matrix[1, 1] = scale_factors[1]
         scaling_matrix[2, 2] = scale_factors[2]
     else:
-        if is_bg_obj and align_direction[2] > 0:
-            # Meaning the object is a supportting background
-            scale_factors = np.max(scale_factors[:2])  # Only care about x, y
-            scaling_matrix[0, 0] = scale_factors
-            scaling_matrix[1, 1] = scale_factors
-            scaling_matrix[2, 2] = scale_factors
-        else:
-            scale_factors = np.min(scale_factors)
-            scaling_matrix[0, 0] = scale_factors
-            scaling_matrix[1, 1] = scale_factors
-            scaling_matrix[2, 2] = scale_factors
+        # if is_bg_obj and align_direction[2] > 0:
+        #     # Meaning the object is a supportting background
+        #     scale_factors = np.max(scale_factors[:2])  # Only care about x, y
+        #     scaling_matrix[0, 0] = scale_factors
+        #     scaling_matrix[1, 1] = scale_factors
+        #     scaling_matrix[2, 2] = scale_factors
+        # else:
+        #     scale_factors = np.min(scale_factors)
+        #     scaling_matrix[0, 0] = scale_factors
+        #     scaling_matrix[1, 1] = scale_factors
+        #     scaling_matrix[2, 2] = scale_factors
+        scale_factors = np.min(scale_factors)
+        scaling_matrix[0, 0] = scale_factors
+        scaling_matrix[1, 1] = scale_factors
+        scaling_matrix[2, 2] = scale_factors
     # Compute translation
     translation = goal_center - robot_center * scale_factors
     translation_matrix = np.eye(4)
@@ -698,13 +697,15 @@ def render_parts_into_block(
             return None, None, None, None
         color_imgs.append(color[:, :, :3])
 
-        if not is_link_map or is_bg_image:
+        if not is_bg_image and not is_link_map:
             continue
         # Render the depth of the whole scene
         flags = pyrender.RenderFlags.DEPTH_ONLY
         full_depth = r.render(scene, flags=flags)
         depth_imgs.append(full_depth)
 
+        if is_bg_image or not is_link_map:
+            continue
         mask = np.zeros((height, width), dtype=np.uint8)
         # Hide all mesh nodes
         for mn in scene.mesh_nodes:
@@ -776,7 +777,8 @@ def render_object_into_block(
         "color": np.zeros((num_samples, width, height, 3), dtype=np.uint8),
         "depth": np.zeros((num_samples, width, height), dtype=np.uint16),
         "mask": np.zeros((num_samples, width, height), dtype=np.uint8),
-        "background": np.zeros((num_poses, width, height, 3), dtype=np.uint8),
+        "bg_color": np.zeros((num_poses, width, height, 3), dtype=np.uint8),
+        "bg_depth": np.zeros((num_poses, width, height), dtype=np.uint16),
     }
     info = {}
     info["camera_info"] = camera_info
@@ -892,17 +894,18 @@ def render_object_into_block(
         if joint_value_idx == 0:
             # Generate background image
             bg_color_imgs, bg_depth_imgs, _, __ = render_parts_into_block(
-                robot_link_mesh_map,
+                robot_visual_map,
                 camera_info,
                 predefined_camera_poses,
                 predefined_light_poses,
                 idx_func,
                 num_poses,
                 keep_ratio=keep_ratio,
-                is_link_map=True,
+                is_link_map=False,
                 is_bg_image=True,
             )
-            render_result["background"] = bg_color_imgs
+            render_result["bg_depth"] = bg_depth_imgs
+            render_result["bg_color"] = bg_color_imgs
         # Save images
         for pose_idx in range(num_poses):
             image_idx = idx_func(pose_idx)
@@ -946,11 +949,23 @@ def render_object_into_block(
             post_fix = f"_{joint_select_idx}"
         # Save background image
         for pose_idx in range(num_poses):
-            bg_img = render_result["background"][pose_idx]
-            cv2.imwrite(f"{video_dir}/background_{pose_idx}.png", bg_img)
-            # Detect canny edge
-            edges = cv2.Canny(cv2.cvtColor(bg_img, cv2.COLOR_BGR2GRAY), 100, 200)
-            cv2.imwrite(f"{video_dir}/background_edge_{pose_idx}.png", edges)
+            bg_color_img = render_result["bg_color"][pose_idx]
+            bg_color_img = cv2.cvtColor(bg_color_img, cv2.COLOR_RGBA2BGRA)
+            cv2.imwrite(f"{video_dir}/bg_color_{pose_idx}.png", bg_color_img)
+            bg_depth_img = render_result["bg_depth"][pose_idx]
+            # Save normalized depth image
+            depth_max = np.max(bg_depth_img)
+            depth_min = np.min(bg_depth_img)
+            bg_depth_img[bg_depth_img == 0] = depth_max
+            bg_depth_img = (
+                (bg_depth_img - depth_min) / (depth_max - depth_min + 1e-6) * 255
+            )
+            bg_depth_img = 255 - bg_depth_img
+            cv2.imwrite(f"{video_dir}/bg_depth_{pose_idx}.png", bg_depth_img)
+            # Save canny edge image
+            bg_color_img = cv2.cvtColor(bg_color_img, cv2.COLOR_BGR2GRAY)
+            edges = cv2.Canny(bg_color_img, 50, 100)
+            cv2.imwrite(f"{video_dir}/bg_edge_{pose_idx}.png", edges)
         info["joint_select_idx"] = joint_select_idx
         info["joint_speed"] = joint_speed
     else:
@@ -966,7 +981,10 @@ def render_object_into_block(
         f"{export_dir}/mask_imgs{post_fix}.npz", images=render_result["mask"]
     )
     np.savez_compressed(
-        f"{export_dir}/background{post_fix}.npz", images=render_result["background"]
+        f"{export_dir}/bg_color{post_fix}.npz", images=render_result["bg_color"]
+    )
+    np.savez_compressed(
+        f"{export_dir}/bg_depth{post_fix}.npz", images=render_result["bg_depth"]
     )
     with open(f"{export_dir}/annotations_3d{post_fix}.json", "w") as f:
         json.dump(label_3ds, f)
