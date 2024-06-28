@@ -1,5 +1,6 @@
 """Do object render as building blocks."""
 
+import imageio
 import json
 import os
 import cv2
@@ -78,13 +79,14 @@ def sample_camera_pose(
     look_at: np.ndarray,
     up: np.ndarray,
     only_front: bool = False,
+    rng: np.random.RandomState = np.random.RandomState(0),
 ):
     # Sample a radius within the given range
-    radius = np.random.uniform(cam_radius_min, cam_radius_max)
+    radius = rng.uniform(cam_radius_min, cam_radius_max)
 
     # Sample spherical coordinates
-    theta = np.random.uniform(0, 2 * np.pi)
-    phi = np.random.uniform(0, np.pi)
+    theta = rng.uniform(0, 2 * np.pi)
+    phi = rng.uniform(0, np.pi)
 
     # Convert spherical coordinates to Cartesian coordinates for the camera position
     if only_front:
@@ -122,21 +124,22 @@ def sample_camera_pose_xy(
     look_at: np.ndarray,
     up: np.ndarray,
     only_front: bool = False,
+    rng: np.random.RandomState = np.random.RandomState(0),
 ):
     """Sample a camera pose given the look-at point and up vector at x-y plane."""
     # Sample a radius within the given range
-    radius = np.random.uniform(cam_radius_min, cam_radius_max)
+    radius = rng.uniform(cam_radius_min, cam_radius_max)
 
     # Convert spherical coordinates to Cartesian coordinates for the camera position
     if only_front:
-        theta = np.random.uniform(np.pi * 0.6, np.pi * 1.4)
-        phi = np.random.uniform(0.23 * np.pi, 0.26 * np.pi)
+        theta = rng.uniform(np.pi * 0.6, np.pi * 1.4)
+        phi = rng.uniform(0.23 * np.pi, 0.26 * np.pi)
         x = radius * np.cos(theta) * np.cos(phi) + look_at[0]
         y = radius * np.sin(theta) * np.cos(phi) + look_at[1]
         z = radius * np.sin(phi) + look_at[2]
     else:
-        theta = np.random.uniform(0, 2 * np.pi)
-        phi = np.random.uniform(-0.25 * np.pi, 0.25 * np.pi)
+        theta = rng.uniform(0, 2 * np.pi)
+        phi = rng.uniform(-0.25 * np.pi, 0.25 * np.pi)
         x = radius * np.cos(theta) * np.cos(phi) + look_at[0]
         y = radius * np.sin(theta) * np.cos(phi) + look_at[1]
         z = radius * np.sin(phi) + look_at[2]
@@ -180,26 +183,49 @@ def compute_kinematic_level(robot):
     return kinematic_level
 
 
-def generate_robot_cfg(robot: URDF, rng: np.random.RandomState, is_bg_obj=False):
+def generate_robot_cfg(
+    robot: URDF, rng: np.random.RandomState, is_bg_obj=False, **kwargs
+):
     # Compute joint kinematic level
     kinematic_level = compute_kinematic_level(robot)
+
+    # Parameter for video
+    video_mode = kwargs.get("video_mode", False)
+    joint_value_idx = kwargs.get("joint_value_idx", 0)
+    joint_speed = kwargs.get("joint_speed", 0.0)
+    joint_select_idx = kwargs.get("joint_select_idx", 0)
 
     actuaion_joints = robot.actuated_joints
     joint_cfg = {}  # Save in joint's name, raw value
     link_cfg = {}  # Save in link's name, normalized
-    for joint in actuaion_joints:
-        joint_value_sample = rng.rand() if not is_bg_obj else 0.0
+    for joint_idx, joint in enumerate(actuaion_joints):
+        if not video_mode:
+            joint_value_sample = rng.rand() if not is_bg_obj else 0.0
+        else:
+            # In video mode, we want to have a continous motion
+            if joint_idx != (joint_select_idx % len(actuaion_joints)) or is_bg_obj:
+                # Not the selected joint, keep the previous value
+                joint_value_sample = 0.0
+            else:
+                # The selected joint, move the joint
+                if joint_speed > 0:
+                    # -pi/2 ~ pi/2
+                    joint_value_sample = (
+                        np.sin(-np.pi / 2 + joint_speed * joint_value_idx * np.pi) / 2
+                        + 0.5
+                    )
+                else:
+                    # pi/2 ~ -pi/2
+                    joint_value_sample = (
+                        np.sin(np.pi / 2 - joint_speed * joint_value_idx * np.pi) / 2
+                        + 0.5
+                    )
         if joint.limit is None:
             joint_limit = [-np.pi, np.pi]
         else:
             joint_limit = [joint.limit.lower, joint.limit.upper]
         limit_low, limit_high = joint_limit[0], joint_limit[1]
-        if joint_value_sample < 0.1:
-            joint_value = limit_low
-        elif joint_value_sample > 0.9:
-            joint_value = limit_high
-        else:
-            joint_value = joint_value_sample * (limit_high - limit_low) + limit_low
+        joint_value = joint_value_sample * (limit_high - limit_low) + limit_low
         if kinematic_level > 1:
             # Existing hierarchical joint, disable the joint
             joint_value = 0.0
@@ -256,10 +282,10 @@ def generate_block_updown_setup(
         align_direction_list.append(np.array([0.0, 0.0, 1.0]))
         on_bbox_list = np.array(
             [
-                [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
-                [[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]],
-                [[0.0, -1.0, 0.0], [1.0, 0.0, 1.0]],
-                [[-1.0, -1.0, 0.0], [0.0, 0.0, 1.0]],
+                [[0.0, 0.0, 0.0], [1.0, 1.0, 0.3]],
+                [[-1.0, 0.0, 0.0], [0.0, 1.0, 0.3]],
+                [[0.0, -1.0, 0.0], [1.0, 0.0, 0.3]],
+                [[-1.0, -1.0, 0.0], [0.0, 0.0, 0.3]],
             ]
         )
         on_bbox_list[:, :, 0] = on_bbox_list[:, :, 0] * scaled_obj_size[0] / 2
@@ -324,6 +350,7 @@ def generate_robot_meshes(
     meta_info,
     rng=np.random.RandomState(0),
     keep_ratio=True,
+    **kwargs,
 ):
     robot_link_mesh_map = {}
     robot_visual_map = {}
@@ -343,7 +370,7 @@ def generate_robot_meshes(
                 continue
             else:
                 return None, None, None
-        joint_cfg, link_cfg = generate_robot_cfg(robot, rng, is_bg_obj)
+        joint_cfg, link_cfg = generate_robot_cfg(robot, rng, is_bg_obj, **kwargs)
         _robot_link_mesh_map, _robot_visual_map, robot_bbox_real = generate_robot_mesh(
             data_id, robot, joint_cfg, goal_bbox, align_direction, is_bg_obj
         )
@@ -606,6 +633,7 @@ def render_parts_into_block(
     num_poses,
     keep_ratio=True,
     is_link_map=False,
+    is_bg_image=False,
 ):
     """Render parts into block."""
     mesh_map = copy.deepcopy(mesh_map)  # Avoid modifying the original mesh_map
@@ -618,6 +646,10 @@ def render_parts_into_block(
     mesh_name_dict = {}
     # Debug
     for mesh, (pose, name) in mesh_map.items():
+        if is_bg_image:
+            # Only render the background
+            if name != "bg":
+                continue
         # mesh.apply_transform(transform)
         pymesh = pyrender.Mesh.from_trimesh(mesh)
         pymesh.name = name
@@ -666,7 +698,7 @@ def render_parts_into_block(
             return None, None, None, None
         color_imgs.append(color[:, :, :3])
 
-        if not is_link_map:
+        if not is_link_map or is_bg_image:
             continue
         # Render the depth of the whole scene
         flags = pyrender.RenderFlags.DEPTH_ONLY
@@ -717,20 +749,26 @@ def render_object_into_block(
     under_list,
     other_list,
     meta_info,
+    num_poses,
+    num_joint_values,
+    video_mode=False,
+    joint_select_idx=0,
     debug=False,
 ):
     """Render an object into a bbox. This bbox is axis-aligned."""
+    if data_id not in meta_info["meta"]:
+        # Skip if the object is not in the meta info
+        return False
+    rng = np.random.RandomState(int(data_id))
     export_dir = os.path.join(output_dir, data_id)
     os.makedirs(export_dir, exist_ok=True)
     sample_type = "xy"
     only_front = True
     keep_ratio = False
-    num_joint_values = 4
     cam_radius_min = 2.5
     cam_radius_max = 3.0
     light_radius_min = 3.0
     light_radius_max = 3.5
-    num_poses = 2
     num_samples = num_joint_values * num_poses
     width = camera_info["width"]
     height = camera_info["height"]
@@ -738,6 +776,7 @@ def render_object_into_block(
         "color": np.zeros((num_samples, width, height, 3), dtype=np.uint8),
         "depth": np.zeros((num_samples, width, height), dtype=np.uint16),
         "mask": np.zeros((num_samples, width, height), dtype=np.uint8),
+        "background": np.zeros((num_poses, width, height, 3), dtype=np.uint8),
     }
     info = {}
     info["camera_info"] = camera_info
@@ -764,11 +803,11 @@ def render_object_into_block(
         if sample_type == "uniform":
             # Compute the camera pose
             camera_pose = sample_camera_pose(
-                cam_radius_min, cam_radius_max, look_at, up, only_front=only_front
+                cam_radius_min, cam_radius_max, look_at, up, only_front, rng
             )
         elif sample_type == "xy":
             camera_pose = sample_camera_pose_xy(
-                cam_radius_min, cam_radius_max, look_at, up, only_front=only_front
+                cam_radius_min, cam_radius_max, look_at, up, only_front, rng
             )
         else:
             raise NotImplementedError
@@ -789,19 +828,37 @@ def render_object_into_block(
 
     # Read articulation informtation
     articulation_info = read_articulation(data_dir, data_id)
-    rng = np.random.RandomState(int(data_id))
-    for joint_idx in range(num_joint_values):
-        # Generate random set-up
-        data_ids, goal_bbox_list, align_direction_list = generate_block_updown_setup(
-            data_id, on_list, under_list, other_list, meta_info, rng
-        )
+    if video_mode:
+        if rng.rand() > 0.5:
+            joint_speed = 1.0 / num_joint_values
+        else:
+            joint_speed = -1.0 / num_joint_values
+    else:
+        joint_speed = 0.0
+    for joint_value_idx in range(num_joint_values):
+        if not video_mode or joint_value_idx == 0:
+            # Generate random set-up
+            data_ids, goal_bbox_list, align_direction_list = (
+                generate_block_updown_setup(
+                    data_id, on_list, under_list, other_list, meta_info, rng
+                )
+            )
         robot_link_mesh_map, robot_visual_map, obj_transforms = generate_robot_meshes(
-            data_dir, data_ids, goal_bbox_list, align_direction_list, meta_info, rng
+            data_dir,
+            data_ids,
+            goal_bbox_list,
+            align_direction_list,
+            meta_info,
+            rng,
+            video_mode=video_mode,
+            joint_value_idx=joint_value_idx,
+            joint_speed=joint_speed,
+            joint_select_idx=joint_select_idx,
         )
         if robot_link_mesh_map is None:
             return False
         # Render objects
-        idx_func = lambda x: x * num_joint_values + joint_idx
+        idx_func = lambda x: x * num_joint_values + joint_value_idx
         # 1. Render on link level
         no_texture_color_imgs, depth_imgs, mask_imgs, annotations = (
             render_parts_into_block(
@@ -832,6 +889,20 @@ def render_object_into_block(
             color_imgs = no_texture_color_imgs
         else:
             return False
+        if joint_value_idx == 0:
+            # Generate background image
+            bg_color_imgs, bg_depth_imgs, _, __ = render_parts_into_block(
+                robot_link_mesh_map,
+                camera_info,
+                predefined_camera_poses,
+                predefined_light_poses,
+                idx_func,
+                num_poses,
+                keep_ratio=keep_ratio,
+                is_link_map=True,
+                is_bg_image=True,
+            )
+            render_result["background"] = bg_color_imgs
         # Save images
         for pose_idx in range(num_poses):
             image_idx = idx_func(pose_idx)
@@ -860,20 +931,55 @@ def render_object_into_block(
         articulation_info,
         debug,
     )
+    if video_mode:
+        video_dir = f"{export_dir}/video"
+        os.makedirs(video_dir, exist_ok=True)
+        # Write video
+        for pose_idx in range(num_poses):
+            color_images = render_result["color"][
+                pose_idx * num_joint_values : (pose_idx + 1) * num_joint_values
+            ]
+            color_images = [
+                cv2.cvtColor(img, cv2.COLOR_BGR2RGB) for img in color_images
+            ]  # For imageio
+            imageio.mimsave(f"{video_dir}/color_images_{pose_idx}.gif", color_images)
+            post_fix = f"_{joint_select_idx}"
+        # Save background image
+        for pose_idx in range(num_poses):
+            bg_img = render_result["background"][pose_idx]
+            cv2.imwrite(f"{video_dir}/background_{pose_idx}.png", bg_img)
+            # Detect canny edge
+            edges = cv2.Canny(cv2.cvtColor(bg_img, cv2.COLOR_BGR2GRAY), 100, 200)
+            cv2.imwrite(f"{video_dir}/background_edge_{pose_idx}.png", edges)
+        info["joint_select_idx"] = joint_select_idx
+        info["joint_speed"] = joint_speed
+    else:
+        post_fix = ""
     # Save results
-    np.savez_compressed(f"{export_dir}/color_imgs.npz", images=render_result["color"])
-    np.savez_compressed(f"{export_dir}/depth_imgs.npz", images=render_result["depth"])
-    np.savez_compressed(f"{export_dir}/mask_imgs.npz", images=render_result["mask"])
-    with open(f"{export_dir}/annotations_3d.json", "w") as f:
+    np.savez_compressed(
+        f"{export_dir}/color_imgs{post_fix}.npz", images=render_result["color"]
+    )
+    np.savez_compressed(
+        f"{export_dir}/depth_imgs{post_fix}.npz", images=render_result["depth"]
+    )
+    np.savez_compressed(
+        f"{export_dir}/mask_imgs{post_fix}.npz", images=render_result["mask"]
+    )
+    np.savez_compressed(
+        f"{export_dir}/background{post_fix}.npz", images=render_result["background"]
+    )
+    with open(f"{export_dir}/annotations_3d{post_fix}.json", "w") as f:
         json.dump(label_3ds, f)
-    with open(f"{export_dir}/info.json", "w") as f:
+    with open(f"{export_dir}/info.json{post_fix}", "w") as f:
         json.dump(info, f)
     return True
 
 
 if __name__ == "__main__":
-    debug = True
-    data_name = "46944"  #
+    debug = False
+    video_mode = True
+    joint_select_idx = 0
+    data_name = "3596"  #
     data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
     output_dir = "/home/harvey/Data/partnet-mobility-v0/output_v2"
     meta_info = json.load(open(f"{output_dir}/meta.json"))
@@ -888,6 +994,9 @@ if __name__ == "__main__":
         "width": 960,
         "height": 960,
     }
+    num_poses = 2
+    num_joint_values = 20
+
     render_object_into_block(
         data_name,
         data_dir,
@@ -897,5 +1006,9 @@ if __name__ == "__main__":
         under_list,
         other_list,
         meta_info,
+        num_poses,
+        num_joint_values,
+        video_mode,
+        joint_select_idx,
         debug,
     )
