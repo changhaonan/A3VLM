@@ -53,230 +53,6 @@ colors_hex = [
 ]
 
 
-def calculate_zy_rotation_for_arrow(vec):
-    gamma = np.arctan2(vec[1], vec[0])
-    Rz = np.array(
-        [
-            [np.cos(gamma), -np.sin(gamma), 0],
-            [np.sin(gamma), np.cos(gamma), 0],
-            [0, 0, 1],
-        ]
-    )
-    vec = Rz.T @ vec
-    beta = np.arctan2(vec[0], vec[2])
-    Ry = np.array(
-        [[np.cos(beta), 0, np.sin(beta)], [0, 1, 0], [-np.sin(beta), 0, np.cos(beta)]]
-    )
-    return Rz, Ry
-
-
-def get_arrow(end, origin=np.array([0, 0, 0]), scale=1.0, color=np.array([1, 0, 0])):
-    import open3d as o3d
-
-    if np.all(end == origin):
-        assert False, "Arrow end and origin are the same."
-    vec = end - origin
-    size = np.sqrt(np.sum(vec**2))
-
-    Rz, Ry = calculate_zy_rotation_for_arrow(vec)
-    mesh = o3d.geometry.TriangleMesh.create_arrow(
-        cone_radius=size / 17.5 * scale,
-        cone_height=size * 0.2 * scale,
-        cylinder_radius=size / 30 * scale,
-        cylinder_height=size * (1 - 0.2 * scale),
-    )
-    mesh.rotate(Ry, center=np.array([0, 0, 0]))
-    mesh.rotate(Rz, center=np.array([0, 0, 0]))
-    mesh.translate(origin)
-    mesh.paint_uniform_color(color)
-    return mesh
-
-
-def check_annotations_o3d(points, bbox_3d, axis_3d, points_mask, title=""):
-    import open3d as o3d
-    from matplotlib import pyplot as plt
-
-    bbox_3d = np.array(bbox_3d)
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points[:, :3])
-    points_color = plt.get_cmap("tab20")(points_mask % 20)[:, :3]
-    pcd.colors = o3d.utility.Vector3dVector(points_color)
-    bbox = o3d.geometry.OrientedBoundingBox()
-    bbox.center = bbox_3d[0:3]
-    bbox.R = R.from_rotvec(bbox_3d[6:9]).as_matrix()
-    bbox.extent = bbox_3d[3:6]
-    bbox.color = [1, 0, 0]
-
-    axis_points = np.array(axis_3d).reshape(2, 3)
-    arrow_o3d = get_arrow(axis_points[1], axis_points[0], scale=1, color=[1, 0, 0])
-    origin = o3d.geometry.TriangleMesh.create_coordinate_frame(
-        size=0.3, origin=[0, 0, 0]
-    )
-    print(title)
-    o3d.visualization.draw_geometries([pcd, bbox, arrow_o3d, origin])
-
-
-def get_rotated_box(cx, cy, w, h, angle):
-    # Create a rectangle centered at the origin
-    rect = Polygon([(-w / 2, -h / 2), (-w / 2, h / 2), (w / 2, h / 2), (w / 2, -h / 2)])
-    # Rotate the rectangle around the origin
-    rect = rotate(rect, angle, origin=(0, 0), use_radians=False)
-    # Translate the rectangle to the center point (cx, cy)
-    rect = translate(rect, cx, cy)
-    return rect
-
-
-def calculate_iou(box1, box2):
-    # Calculate intersection area
-    intersection_area = box1.intersection(box2).area
-    # Calculate union area
-    union_area = box1.area + box2.area - intersection_area
-    # Compute IoU
-    iou = intersection_area / union_area
-    return iou
-
-
-def draw_rotating_bbox(img, bbox, angle, color=(0, 255, 0), thickness=2, text=None):
-    """
-    Draws a rotated bounding box on the image.
-
-    Parameters:
-    - img: The image on which to draw.
-    - bbox: The bounding box specification as (center_x, center_y, width, height).
-    - angle: The angle of rotation in degrees.
-    - color: The color of the bounding box (default is green).
-    - thickness: The thickness of the bounding box lines.
-    """
-    center, size = (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3]))
-    # Calculate the coordinates of the rectangle's corners after rotation
-    if angle is None or angle == "none" or angle == "None":
-        # when the angle is None, it is pre-defined Perpendicular to the image
-        angle = 0
-        if text is None:
-            text = "None Angle"
-        else:
-            text = "Perpendicular_" + text
-    # Angle convert to degree
-    angle = angle * 180 / np.pi
-    rect_coords = cv2.boxPoints(((center[0], center[1]), (size[0], size[1]), angle))
-    rect_coords = np.int0(rect_coords)
-    # Draw the rotated rectangle
-    cv2.drawContours(img, [rect_coords], 0, color, thickness)
-    if text is not None:
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        bottom_left = (int(bbox[0] - bbox[2] / 2 - 5), int(bbox[1] + bbox[3] / 2 + 5))
-        cv2.putText(img, text, bottom_left, font, 2.5, color, 2, cv2.LINE_AA)
-    return img
-
-
-def draw_rotating_bboxs_with_text(img, list_bbox_name, thickness=2):
-    for bbox_name in list_bbox_name:
-        color = random.choice(list(colors.values()))
-        name = bbox_name[0]
-        bbox = bbox_name[1][:4]
-        angle = bbox_name[1][4]
-        img = draw_rotating_bbox(img, bbox, angle, color, thickness, text=name)
-    return img
-
-
-def intersect_line_bbox(origin, direction, bbox):
-    # Unpack the bounding box
-    x_center, y_center, width, height = bbox
-    x_min = x_center - width / 2
-    x_max = x_center + width / 2
-    y_min = y_center - height / 2
-    y_max = y_center + height / 2
-
-    # Initialize variables
-    tmin = float("-inf")
-    tmax = float("inf")
-
-    # Check for intersection with each bbox side
-    for i in range(2):
-        if direction[i] != 0:
-            t1 = (x_min - origin[i]) / direction[i]
-            t2 = (x_max - origin[i]) / direction[i]
-
-            tmin = max(tmin, min(t1, t2))
-            tmax = min(tmax, max(t1, t2))
-        elif origin[i] < x_min or origin[i] > x_max:
-            return None  # Line parallel to slab, no intersection
-
-    if tmin > tmax:
-        return None  # No intersection
-
-    # Calculate the intersection point
-    intersection = origin + tmin * direction
-
-    # Check if the intersection is within the y bounds
-    if intersection[1] < y_min or intersection[1] > y_max:
-        return None
-
-    return intersection
-
-
-def convert_depth_to_color(depth_img, maintain_ratio=False):
-    zero_mask = depth_img == 0
-    depth_min = np.min(depth_img[~zero_mask])
-    if maintain_ratio:
-        depth_max = depth_min + 2000.0
-    else:
-        depth_max = np.max(depth_img[~zero_mask])
-    norm_depth_img = (depth_img - depth_min) / (depth_max - depth_min + 1e-6)
-    norm_depth_img[zero_mask] = 0
-    norm_depth_img = np.clip(norm_depth_img, 0, 1)
-    # Convert the depth image to a color image
-    color = cv2.applyColorMap((norm_depth_img * 255).astype(np.uint8), cv2.COLORMAP_JET)
-    return color
-
-
-####################################### 3D Utils ########################################
-def read_ply_ascii(filename):
-    with open(filename) as f:
-        # Check if the file starts with ply
-        if "ply" not in f.readline():
-            raise ValueError("This file is not a valid PLY file.")
-
-        # Skip the header, finding where it ends
-        line = ""
-        while "end_header" not in line:
-            line = f.readline()
-            if "element vertex" in line:
-                num_vertices = int(line.split()[-1])
-
-        # Read the vertex data
-        data = np.zeros((num_vertices, 3), dtype=float)
-        for i in range(num_vertices):
-            line = f.readline().split()
-            data[i] = np.array([float(line[0]), float(line[1]), float(line[2])])
-
-    return data
-
-
-def farthest_point_sample(point, npoint):
-    """
-    Input:
-        xyz: pointcloud data, [N, D]
-        npoint: number of samples
-    Return:
-        centroids: sampled pointcloud index, [npoint, D]
-    """
-    N, D = point.shape
-    xyz = point[:, :3]
-    centroids = np.zeros((npoint,))
-    distance = np.ones((N,)) * 1e10
-    farthest = np.random.randint(0, N)
-    for i in range(npoint):
-        centroids[i] = farthest
-        centroid = xyz[farthest, :]
-        dist = np.sum((xyz - centroid) ** 2, -1)
-        mask = dist < distance
-        distance[mask] = dist[mask]
-        farthest = np.argmax(distance, -1)
-    point = point[centroids.astype(np.int32)]
-    return point
-
-
 ####################################### 3D Structure ########################################
 class AxisBBox3D:
     """Axis 3D BBox."""
@@ -488,3 +264,289 @@ class AxisBBox3D:
         bbox.R = self.R
         bbox.color = [1, 0, 0]
         return bbox
+
+
+def calculate_zy_rotation_for_arrow(vec):
+    gamma = np.arctan2(vec[1], vec[0])
+    Rz = np.array(
+        [
+            [np.cos(gamma), -np.sin(gamma), 0],
+            [np.sin(gamma), np.cos(gamma), 0],
+            [0, 0, 1],
+        ]
+    )
+    vec = Rz.T @ vec
+    beta = np.arctan2(vec[0], vec[2])
+    Ry = np.array(
+        [[np.cos(beta), 0, np.sin(beta)], [0, 1, 0], [-np.sin(beta), 0, np.cos(beta)]]
+    )
+    return Rz, Ry
+
+
+def get_arrow(end, origin=np.array([0, 0, 0]), scale=1.0, color=np.array([1, 0, 0])):
+    import open3d as o3d
+
+    if np.all(end == origin):
+        assert False, "Arrow end and origin are the same."
+    vec = end - origin
+    size = np.sqrt(np.sum(vec**2))
+
+    Rz, Ry = calculate_zy_rotation_for_arrow(vec)
+    mesh = o3d.geometry.TriangleMesh.create_arrow(
+        cone_radius=size / 17.5 * scale,
+        cone_height=size * 0.2 * scale,
+        cylinder_radius=size / 30 * scale,
+        cylinder_height=size * (1 - 0.2 * scale),
+    )
+    mesh.rotate(Ry, center=np.array([0, 0, 0]))
+    mesh.rotate(Rz, center=np.array([0, 0, 0]))
+    mesh.translate(origin)
+    mesh.paint_uniform_color(color)
+    return mesh
+
+
+def check_annotations_3d(points, bbox_3d, axis_3d, points_mask, title=""):
+    import open3d as o3d
+    from matplotlib import pyplot as plt
+
+    bbox_3d = np.array(bbox_3d)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points[:, :3])
+    points_color = plt.get_cmap("tab20")(points_mask % 20)[:, :3]
+    pcd.colors = o3d.utility.Vector3dVector(points_color)
+    bbox = o3d.geometry.OrientedBoundingBox()
+    bbox.center = bbox_3d[0:3]
+    bbox.R = R.from_rotvec(bbox_3d[6:9]).as_matrix()
+    bbox.extent = bbox_3d[3:6]
+    bbox.color = [1, 0, 0]
+
+    axis_points = np.array(axis_3d).reshape(2, 3)
+    arrow_o3d = get_arrow(axis_points[1], axis_points[0], scale=1, color=[1, 0, 0])
+    origin = o3d.geometry.TriangleMesh.create_coordinate_frame(
+        size=0.3, origin=[0, 0, 0]
+    )
+    print(title)
+    o3d.visualization.draw_geometries([pcd, bbox, arrow_o3d, origin])
+
+
+def check_annotations_2d(image, bbox_3d, axis_3d, intrinsic, title=""):
+    image = image.copy()
+    # Get project
+    bbox = AxisBBox3D(
+        center=bbox_3d[0:3],
+        extent=bbox_3d[3:6],
+        rot_vec=bbox_3d[6:9],
+        axis=axis_3d.reshape(2, 3),
+    )
+    bbox_points = bbox.get_bbox_3d_proj(
+        intrinsic, np.eye(4), 0, 1, image.shape[1], image.shape[0]
+    )
+    axis_points = bbox.get_axis_3d_proj(
+        intrinsic, np.eye(4), 0, 1, image.shape[1], image.shape[0]
+    )
+    # Draw the bbox
+    for i, j in zip(
+        [0, 0, 0, 1, 1, 2, 2, 6, 5, 4, 3, 3], [1, 2, 3, 6, 7, 7, 5, 4, 4, 7, 6, 5]
+    ):
+        if i == 0 and j == 1:
+            color = (0, 0, 255)
+        elif i == 0 and j == 2:
+            color = (0, 255, 0)
+        elif i == 0 and j == 3:
+            color = (255, 0, 0)
+        else:
+            color = (200, 200, 200)
+        cv2.line(
+            image,
+            (
+                int(bbox_points[i][0] * image.shape[1]),
+                int(bbox_points[i][1] * image.shape[0]),
+            ),
+            (
+                int(bbox_points[j][0] * image.shape[1]),
+                int(bbox_points[j][1] * image.shape[0]),
+            ),
+            color,
+            3,
+            lineType=cv2.LINE_8,
+        )
+    # Draw the lines
+    for i, j in zip([0], [1]):
+        cv2.arrowedLine(
+            image,
+            (
+                int(axis_points[i][0] * image.shape[1]),
+                int(axis_points[i][1] * image.shape[0]),
+            ),
+            (
+                int(axis_points[j][0] * image.shape[1]),
+                int(axis_points[j][1] * image.shape[0]),
+            ),
+            (0, 200, 200),
+            3,
+        )
+    # Reshape the image to height 480
+    resize_shape = (480, int(480 / image.shape[0] * image.shape[1]))
+    image = cv2.resize(image, resize_shape)
+    return image
+
+
+def get_rotated_box(cx, cy, w, h, angle):
+    # Create a rectangle centered at the origin
+    rect = Polygon([(-w / 2, -h / 2), (-w / 2, h / 2), (w / 2, h / 2), (w / 2, -h / 2)])
+    # Rotate the rectangle around the origin
+    rect = rotate(rect, angle, origin=(0, 0), use_radians=False)
+    # Translate the rectangle to the center point (cx, cy)
+    rect = translate(rect, cx, cy)
+    return rect
+
+
+def calculate_iou(box1, box2):
+    # Calculate intersection area
+    intersection_area = box1.intersection(box2).area
+    # Calculate union area
+    union_area = box1.area + box2.area - intersection_area
+    # Compute IoU
+    iou = intersection_area / union_area
+    return iou
+
+
+def draw_rotating_bbox(img, bbox, angle, color=(0, 255, 0), thickness=2, text=None):
+    """
+    Draws a rotated bounding box on the image.
+
+    Parameters:
+    - img: The image on which to draw.
+    - bbox: The bounding box specification as (center_x, center_y, width, height).
+    - angle: The angle of rotation in degrees.
+    - color: The color of the bounding box (default is green).
+    - thickness: The thickness of the bounding box lines.
+    """
+    center, size = (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3]))
+    # Calculate the coordinates of the rectangle's corners after rotation
+    if angle is None or angle == "none" or angle == "None":
+        # when the angle is None, it is pre-defined Perpendicular to the image
+        angle = 0
+        if text is None:
+            text = "None Angle"
+        else:
+            text = "Perpendicular_" + text
+    # Angle convert to degree
+    angle = angle * 180 / np.pi
+    rect_coords = cv2.boxPoints(((center[0], center[1]), (size[0], size[1]), angle))
+    rect_coords = np.int0(rect_coords)
+    # Draw the rotated rectangle
+    cv2.drawContours(img, [rect_coords], 0, color, thickness)
+    if text is not None:
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        bottom_left = (int(bbox[0] - bbox[2] / 2 - 5), int(bbox[1] + bbox[3] / 2 + 5))
+        cv2.putText(img, text, bottom_left, font, 2.5, color, 2, cv2.LINE_AA)
+    return img
+
+
+def draw_rotating_bboxs_with_text(img, list_bbox_name, thickness=2):
+    for bbox_name in list_bbox_name:
+        color = random.choice(list(colors.values()))
+        name = bbox_name[0]
+        bbox = bbox_name[1][:4]
+        angle = bbox_name[1][4]
+        img = draw_rotating_bbox(img, bbox, angle, color, thickness, text=name)
+    return img
+
+
+def intersect_line_bbox(origin, direction, bbox):
+    # Unpack the bounding box
+    x_center, y_center, width, height = bbox
+    x_min = x_center - width / 2
+    x_max = x_center + width / 2
+    y_min = y_center - height / 2
+    y_max = y_center + height / 2
+
+    # Initialize variables
+    tmin = float("-inf")
+    tmax = float("inf")
+
+    # Check for intersection with each bbox side
+    for i in range(2):
+        if direction[i] != 0:
+            t1 = (x_min - origin[i]) / direction[i]
+            t2 = (x_max - origin[i]) / direction[i]
+
+            tmin = max(tmin, min(t1, t2))
+            tmax = min(tmax, max(t1, t2))
+        elif origin[i] < x_min or origin[i] > x_max:
+            return None  # Line parallel to slab, no intersection
+
+    if tmin > tmax:
+        return None  # No intersection
+
+    # Calculate the intersection point
+    intersection = origin + tmin * direction
+
+    # Check if the intersection is within the y bounds
+    if intersection[1] < y_min or intersection[1] > y_max:
+        return None
+
+    return intersection
+
+
+def convert_depth_to_color(depth_img, maintain_ratio=False):
+    zero_mask = depth_img == 0
+    depth_min = np.min(depth_img[~zero_mask])
+    if maintain_ratio:
+        depth_max = depth_min + 2000.0
+    else:
+        depth_max = np.max(depth_img[~zero_mask])
+    norm_depth_img = (depth_img - depth_min) / (depth_max - depth_min + 1e-6)
+    norm_depth_img[zero_mask] = 0
+    norm_depth_img = np.clip(norm_depth_img, 0, 1)
+    # Convert the depth image to a color image
+    color = cv2.applyColorMap((norm_depth_img * 255).astype(np.uint8), cv2.COLORMAP_JET)
+    return color
+
+
+####################################### 3D Utils ########################################
+def read_ply_ascii(filename):
+    with open(filename) as f:
+        # Check if the file starts with ply
+        if "ply" not in f.readline():
+            raise ValueError("This file is not a valid PLY file.")
+
+        # Skip the header, finding where it ends
+        line = ""
+        while "end_header" not in line:
+            line = f.readline()
+            if "element vertex" in line:
+                num_vertices = int(line.split()[-1])
+
+        # Read the vertex data
+        data = np.zeros((num_vertices, 3), dtype=float)
+        for i in range(num_vertices):
+            line = f.readline().split()
+            data[i] = np.array([float(line[0]), float(line[1]), float(line[2])])
+
+    return data
+
+
+def farthest_point_sample(point, npoint):
+    """
+    Input:
+        xyz: pointcloud data, [N, D]
+        npoint: number of samples
+    Return:
+        centroids: sampled pointcloud index, [npoint, D]
+    """
+    N, D = point.shape
+    xyz = point[:, :3]
+    centroids = np.zeros((npoint,))
+    distance = np.ones((N,)) * 1e10
+    farthest = np.random.randint(0, N)
+    for i in range(npoint):
+        centroids[i] = farthest
+        centroid = xyz[farthest, :]
+        dist = np.sum((xyz - centroid) ** 2, -1)
+        mask = dist < distance
+        distance[mask] = dist[mask]
+        farthest = np.argmax(distance, -1)
+    point = point[centroids.astype(np.int32)]
+    return point

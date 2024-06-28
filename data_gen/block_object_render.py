@@ -9,7 +9,7 @@ import trimesh
 import numpy as np
 from urchin import URDF
 from matplotlib import pyplot as plt
-from utils import AxisBBox3D, get_arrow, check_annotations_o3d
+from utils import AxisBBox3D, get_arrow, check_annotations_3d, check_annotations_2d
 
 
 ################################ Utility functions ################################
@@ -210,23 +210,25 @@ def generate_robot_cfg(robot: URDF, rng: np.random.RandomState, is_bg_obj=False)
     return joint_cfg, link_cfg
 
 
-def generate_block_setup(data_id, on_list, under_list, rng=np.random.RandomState(0)):
+def generate_block_updown_setup(
+    data_id, on_list, under_list, other_list, meta_info, rng=np.random.RandomState(0)
+):
     """
     On list is the list of objects that are placed upon other objects.
     Under list is the list of objects that are placed under other objects.
     Return [goal_bbox_list, align_direction_list]
     """
-    on_bbox_list = [
-        [[0.0, 0.0, 0.0], [0.5, 0.5, 1.0]],
-        [[-0.5, 0.0, 0.0], [0.0, 0.5, 1.0]],
-        [[0.0, -0.5, 0.0], [0.5, 0.0, 1.0]],
-        [[-0.5, -0.5, 0.0], [0.0, 0.0, 1.0]],
-    ]
     goal_bbox_list = []
     align_direction_list = []
     data_ids = []
-    on_bbox_idxs = rng.choice(len(on_bbox_list), 2, replace=False)
     if data_id in on_list:
+        on_bbox_list = [
+            [[0.0, 0.0, 0.0], [0.5, 0.5, 1.0]],
+            [[-0.5, 0.0, 0.0], [0.0, 0.5, 1.0]],
+            [[0.0, -0.5, 0.0], [0.5, 0.0, 1.0]],
+            [[-0.5, -0.5, 0.0], [0.0, 0.0, 1.0]],
+        ]
+        on_bbox_idxs = rng.choice(len(on_bbox_list), 2, replace=False)
         # First on
         data_ids.append(data_id)
         goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[0]]))
@@ -243,18 +245,41 @@ def generate_block_setup(data_id, on_list, under_list, rng=np.random.RandomState
         align_direction_list.append(np.array([0.0, 0.0, 1.0]))
     elif data_id in under_list:
         data_ids.append(data_id)
-        goal_bbox_list.append(np.array([[-0.5, -0.5, 0.0], [0.5, 0.5, -1.0]]))
+        obj_bbox = np.array(meta_info["meta"][data_id]["bbox"])
+        goal_bbox = np.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 0.0]])
+        obj_size = obj_bbox[1] - obj_bbox[0]
+        goal_size = goal_bbox[1] - goal_bbox[0]
+        scale_factors = goal_size / obj_size
+        scale_factor = np.min(scale_factors)
+        scaled_obj_size = obj_size * scale_factor
+        goal_bbox_list.append(goal_bbox)
         align_direction_list.append(np.array([0.0, 0.0, 1.0]))
+        on_bbox_list = np.array(
+            [
+                [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]],
+                [[-1.0, 0.0, 0.0], [0.0, 1.0, 1.0]],
+                [[0.0, -1.0, 0.0], [1.0, 0.0, 1.0]],
+                [[-1.0, -1.0, 0.0], [0.0, 0.0, 1.0]],
+            ]
+        )
+        on_bbox_list[:, :, 0] = on_bbox_list[:, :, 0] * scaled_obj_size[0] / 2
+        on_bbox_list[:, :, 1] = on_bbox_list[:, :, 1] * scaled_obj_size[1] / 2
         # First on
+        on_bbox_idxs = rng.choice(len(on_bbox_list), 2, replace=False)
         on_data_id = rng.choice(on_list)
         data_ids.append(on_data_id)
         goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[0]]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
-        # # Second on
+        # Second on
         # on_data_id = rng.choice(on_list)
         # data_ids.append(on_data_id)
         # goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[1]]))
         # align_direction_list.append(np.array([0.0, 0.0, -1.0]))
+    elif data_id in other_list:
+        # If the object is not in the on_list or under_list, it is a standalone object
+        goal_bbox_list.append(np.array([[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]]))
+        align_direction_list.append(np.array([0.0, 0.0, 1.0]))
+        data_ids.append(data_id)
     return data_ids, goal_bbox_list, align_direction_list
 
 
@@ -296,6 +321,7 @@ def generate_robot_meshes(
     data_ids,
     goal_bbox_list,
     align_direction_list,
+    meta_info,
     rng=np.random.RandomState(0),
     keep_ratio=True,
 ):
@@ -309,15 +335,23 @@ def generate_robot_meshes(
             True if idx > 0 else False
         )  # Only the first object is the target object
         data_file = f"{data_dir}/{data_id}/mobility.urdf"
-        robot = URDF.load(data_file)
+        try:
+            robot = URDF.load(data_file)
+        except Exception as e:
+            print(f"Error in loading {data_file}: {e}")
+            if is_bg_obj:
+                continue
+            else:
+                return None, None, None
         joint_cfg, link_cfg = generate_robot_cfg(robot, rng, is_bg_obj)
-        _robot_link_mesh_map, _robot_visual_map, robot_bbox = generate_robot_mesh(
+        _robot_link_mesh_map, _robot_visual_map, robot_bbox_real = generate_robot_mesh(
             data_id, robot, joint_cfg, goal_bbox, align_direction, is_bg_obj
         )
 
         # Compute bbox & transform
+        robot_bbox_static = np.array(meta_info["meta"][data_id]["bbox"])
         transform = compute_bbox_transform(
-            robot_bbox, goal_bbox, align_direction, keep_ratio, is_bg_obj
+            robot_bbox_static, goal_bbox, align_direction, keep_ratio, is_bg_obj
         )
         for mesh, (pose, name) in _robot_link_mesh_map.items():
             mesh.apply_transform(transform)
@@ -355,10 +389,10 @@ def compute_bbox_transform(
 ):
     """Bg object and foreground object has different emphasis."""
     # Compute dimensions
-    robot_min = np.min(init_bbox, axis=0)
-    robot_max = np.max(init_bbox, axis=0)
-    robot_size = robot_max - robot_min
-    robot_center = (robot_min + robot_max) / 2
+    obj_min = np.min(init_bbox, axis=0)
+    obj_max = np.max(init_bbox, axis=0)
+    obj_size = obj_max - obj_min
+    robot_center = (obj_min + obj_max) / 2
 
     goal_min = np.min(goal_bbox, axis=0)
     goal_max = np.max(goal_bbox, axis=0)
@@ -366,24 +400,24 @@ def compute_bbox_transform(
     goal_center = (goal_min + goal_max) / 2
 
     # Compute scale factors
-    scale_factors = goal_size / robot_size
+    scale_factors = goal_size / obj_size
     scaling_matrix = np.eye(4)
     if not keep_ratio:
         scaling_matrix[0, 0] = scale_factors[0]
         scaling_matrix[1, 1] = scale_factors[1]
         scaling_matrix[2, 2] = scale_factors[2]
     else:
-        if not is_bg_obj:
-            scale_factors = np.min(scale_factors)
-            scaling_matrix[0, 0] = scale_factors
-            scaling_matrix[1, 1] = scale_factors
-            scaling_matrix[2, 2] = scale_factors
-        else:
+        if is_bg_obj and align_direction[2] > 0:
+            # Meaning the object is a supportting background
             scale_factors = np.max(scale_factors[:2])  # Only care about x, y
             scaling_matrix[0, 0] = scale_factors
             scaling_matrix[1, 1] = scale_factors
             scaling_matrix[2, 2] = scale_factors
-
+        else:
+            scale_factors = np.min(scale_factors)
+            scaling_matrix[0, 0] = scale_factors
+            scaling_matrix[1, 1] = scale_factors
+            scaling_matrix[2, 2] = scale_factors
     # Compute translation
     translation = goal_center - robot_center * scale_factors
     translation_matrix = np.eye(4)
@@ -392,8 +426,8 @@ def compute_bbox_transform(
     # Combine scaling and translation
     transform_matrix = np.dot(translation_matrix, scaling_matrix)
 
-    cur_min = goal_center - scaling_matrix[:3, :3].diagonal() * robot_size / 2
-    cur_max = goal_center + scaling_matrix[:3, :3].diagonal() * robot_size / 2
+    cur_min = goal_center - scaling_matrix[:3, :3].diagonal() * obj_size / 2
+    cur_max = goal_center + scaling_matrix[:3, :3].diagonal() * obj_size / 2
     # Perform alignment
     align_transform = np.eye(4)
     if align_direction[0] < 0:
@@ -415,13 +449,13 @@ def compute_bbox_transform(
 
 def read_articulation(data_dir, data_name):
     # Load joint info
-    joint_info_file = os.path.join(output_dir, "mobility_v2.json")
+    joint_info_file = os.path.join(data_dir, data_name, "mobility_v2.json")
     joint_info = json.load(open(joint_info_file))
     # Filterout junk data
     joint_info = [joint for joint in joint_info if joint["joint"] != "junk"]
     # Load semantic info
     semantic_data = []
-    semantic_file = os.path.join(output_dir, "semantics.txt")
+    semantic_file = os.path.join(data_dir, data_name, "semantics.txt")
     with open(semantic_file, "r") as file:
         for line in file:
             parts = line.strip().split(" ")
@@ -460,6 +494,7 @@ def generater_label_3d(
     obj_transforms,
     camera_info,
     articulation_info,
+    debug=False,
 ):
     sample_size = -1
     fx = camera_info["fx"]
@@ -545,9 +580,18 @@ def generater_label_3d(
                 "camera_pose": camera_pose,
             }
             # [DEBUG]
-            masks[masks == 255] = 20
-            masks = masks.astype(np.uint8)
-            check_annotations_o3d(points, bbox_array, axis_array, masks)
+            if debug:
+                # 3D visualization
+                # masks[masks == 255] = 20
+                # masks = masks.astype(np.uint8)
+                # check_annotations_3d(points, bbox_array, axis_array, masks)
+                # 2D visualization
+                vis_image = check_annotations_2d(
+                    color, bbox_array, axis_array, intrinsic
+                )
+                cv2.imshow("vis_image", vis_image)
+                cv2.waitKey(0)
+
         label_3ds.append(label_3d)
     return label_3ds
 
@@ -615,7 +659,11 @@ def render_parts_into_block(
 
         # Render color image
         flags = pyrender.RenderFlags.RGBA
-        color, _ = r.render(scene, flags=flags)
+        try:
+            color, _ = r.render(scene, flags=flags)
+        except Exception as e:
+            print(f"Error in rendering: {e}")
+            return None, None, None, None
         color_imgs.append(color[:, :, :3])
 
         if not is_link_map:
@@ -661,9 +709,19 @@ def render_parts_into_block(
 
 
 def render_object_into_block(
-    data_id, data_dir, output_dir, camera_info, on_list, under_list
+    data_id,
+    data_dir,
+    output_dir,
+    camera_info,
+    on_list,
+    under_list,
+    other_list,
+    meta_info,
+    debug=False,
 ):
     """Render an object into a bbox. This bbox is axis-aligned."""
+    export_dir = os.path.join(output_dir, data_id)
+    os.makedirs(export_dir, exist_ok=True)
     sample_type = "xy"
     only_front = True
     keep_ratio = False
@@ -731,30 +789,34 @@ def render_object_into_block(
 
     # Read articulation informtation
     articulation_info = read_articulation(data_dir, data_id)
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(int(data_id))
     for joint_idx in range(num_joint_values):
         # Generate random set-up
-        data_ids, goal_bbox_list, align_direction_list = generate_block_setup(
-            data_id, on_list, under_list, rng
+        data_ids, goal_bbox_list, align_direction_list = generate_block_updown_setup(
+            data_id, on_list, under_list, other_list, meta_info, rng
         )
         robot_link_mesh_map, robot_visual_map, obj_transforms = generate_robot_meshes(
-            data_dir, data_ids, goal_bbox_list, align_direction_list, rng
+            data_dir, data_ids, goal_bbox_list, align_direction_list, meta_info, rng
         )
+        if robot_link_mesh_map is None:
+            return False
         # Render objects
         idx_func = lambda x: x * num_joint_values + joint_idx
         # 1. Render on link level
-        _, depth_imgs, mask_imgs, annotations = render_parts_into_block(
-            robot_link_mesh_map,
-            camera_info,
-            predefined_camera_poses,
-            predefined_light_poses,
-            idx_func,
-            num_poses,
-            keep_ratio=keep_ratio,
-            is_link_map=True,
+        no_texture_color_imgs, depth_imgs, mask_imgs, annotations = (
+            render_parts_into_block(
+                robot_link_mesh_map,
+                camera_info,
+                predefined_camera_poses,
+                predefined_light_poses,
+                idx_func,
+                num_poses,
+                keep_ratio=keep_ratio,
+                is_link_map=True,
+            )
         )
         # 2. Render on visual level
-        color_imgs, _, _, _ = render_parts_into_block(
+        texture_color_imgs, _, _, _ = render_parts_into_block(
             robot_visual_map,
             camera_info,
             predefined_camera_poses,
@@ -764,6 +826,12 @@ def render_object_into_block(
             keep_ratio=keep_ratio,
             is_link_map=False,
         )
+        if texture_color_imgs is not None:
+            color_imgs = texture_color_imgs
+        elif no_texture_color_imgs is not None:
+            color_imgs = no_texture_color_imgs
+        else:
+            return False
         # Save images
         for pose_idx in range(num_poses):
             image_idx = idx_func(pose_idx)
@@ -790,27 +858,28 @@ def render_object_into_block(
         info["obj_transforms"],
         camera_info,
         articulation_info,
+        debug,
     )
     # Save results
-    np.savez_compressed(f"{output_dir}/color_imgs.npz", images=render_result["color"])
-    np.savez_compressed(f"{output_dir}/depth_imgs.npz", images=render_result["depth"])
-    np.savez_compressed(f"{output_dir}/mask_imgs.npz", images=render_result["mask"])
-    with open(f"{output_dir}/annotations_3d.json", "w") as f:
+    np.savez_compressed(f"{export_dir}/color_imgs.npz", images=render_result["color"])
+    np.savez_compressed(f"{export_dir}/depth_imgs.npz", images=render_result["depth"])
+    np.savez_compressed(f"{export_dir}/mask_imgs.npz", images=render_result["mask"])
+    with open(f"{export_dir}/annotations_3d.json", "w") as f:
         json.dump(label_3ds, f)
-    with open(f"{output_dir}/info.json", "w") as f:
+    with open(f"{export_dir}/info.json", "w") as f:
         json.dump(info, f)
+    return True
 
 
 if __name__ == "__main__":
-    under_list = ["103351", "40417"]
-    on_list = ["920", "101564", "152", "991", "103007", "103037", "3615"]
-    # on_list = ["152"]
-
+    debug = True
+    data_name = "46944"  #
     data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
-    output_dir = "/home/harvey/Data/partnet-mobility-v0/output"
-    data_name = "103351"  #
-    data_file = f"{data_dir}/{data_name}/mobility.urdf"
-    output_dir = f"{output_dir}/{data_name}"
+    output_dir = "/home/harvey/Data/partnet-mobility-v0/output_v2"
+    meta_info = json.load(open(f"{output_dir}/meta.json"))
+    on_list = meta_info["on"]
+    under_list = meta_info["under"]
+    other_list = meta_info["other"]
     camera_info = {
         "fx": 1000,
         "fy": 1000,
@@ -819,8 +888,14 @@ if __name__ == "__main__":
         "width": 960,
         "height": 960,
     }
-    os.makedirs(os.path.join(output_dir, "color_test"), exist_ok=True)
-
     render_object_into_block(
-        data_name, data_dir, output_dir, camera_info, on_list, under_list
+        data_name,
+        data_dir,
+        output_dir,
+        camera_info,
+        on_list,
+        under_list,
+        other_list,
+        meta_info,
+        debug,
     )
