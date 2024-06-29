@@ -59,6 +59,7 @@ def replace_background(data_dir, data_id, video_length):
             color_new_imgs = []
             for frame_idx in range(video_length):
                 color_img = color_imgs[video_idx * video_length + frame_idx]
+                color_img = cv2.cvtColor(color_img, cv2.COLOR_BGR2RGB)
                 depth_img = depth_imgs[video_idx * video_length + frame_idx]
                 mask_img = mask_imgs[video_idx * video_length + frame_idx]
                 bg_img = bg_imgs[video_idx]
@@ -68,15 +69,15 @@ def replace_background(data_dir, data_id, video_length):
                 color_new_imgs.append(color_new)
             imageio.mimsave(
                 os.path.join(
-                    data_path, f"video/color_{joint_select_idx}_{video_idx}.gif"
+                    data_path, f"video/color_{joint_select_idx}_{video_idx}_sd.mp4"
                 ),
                 color_new_imgs,
-                duration=0.1,
+                fps=30,
             )
 
 
 if __name__ == "__main__":
     output_dir = "/home/harvey/Data/partnet-mobility-v0/output_v2"
-    data_id = "3596"
+    data_id = "46944"
     video_length = 20
     replace_background(output_dir, data_id, video_length)

@@ -1,5 +1,6 @@
 """Do object render as building blocks."""
 
+import shutil
 import imageio
 import json
 import os
@@ -788,7 +789,7 @@ def render_object_into_block(
     info["model_cat"] = meta["model_cat"]
     info["camera_poses"] = [None] * num_samples
     info["obj_transforms"] = [None] * num_samples
-
+    info["data_ids"] = [None] * num_samples
     # Generate camera pose
     radius = 1.0
     cam_radius_min = radius * cam_radius_min  # Minimum distance from the look-at point
@@ -922,7 +923,8 @@ def render_object_into_block(
             info["obj_transforms"][image_idx] = obj_transforms[
                 0
             ].tolist()  # Only first object
-
+        # Update info
+        info["data_ids"][joint_value_idx] = data_ids
     # Generate labels for the scene
     label_3ds = generater_label_3d(
         render_result["color"],
@@ -945,27 +947,35 @@ def render_object_into_block(
             color_images = [
                 cv2.cvtColor(img, cv2.COLOR_BGR2RGB) for img in color_images
             ]  # For imageio
-            imageio.mimsave(f"{video_dir}/color_images_{pose_idx}.gif", color_images)
+            imageio.mimsave(
+                f"{video_dir}/color_{joint_select_idx}_{pose_idx}.mp4",
+                color_images,
+                fps=30,
+            )
             post_fix = f"_{joint_select_idx}"
         # Save background image
         for pose_idx in range(num_poses):
             bg_color_img = render_result["bg_color"][pose_idx]
             bg_color_img = cv2.cvtColor(bg_color_img, cv2.COLOR_RGBA2BGRA)
-            cv2.imwrite(f"{video_dir}/bg_color_{pose_idx}.png", bg_color_img)
+            cv2.imwrite(
+                f"{video_dir}/bg_color_{joint_select_idx}_{pose_idx}.png", bg_color_img
+            )
             bg_depth_img = render_result["bg_depth"][pose_idx]
             # Save normalized depth image
             depth_max = np.max(bg_depth_img)
-            depth_min = np.min(bg_depth_img)
+            depth_min = np.min(bg_depth_img[bg_depth_img > 0])
             bg_depth_img[bg_depth_img == 0] = depth_max
             bg_depth_img = (
                 (bg_depth_img - depth_min) / (depth_max - depth_min + 1e-6) * 255
             )
             bg_depth_img = 255 - bg_depth_img
-            cv2.imwrite(f"{video_dir}/bg_depth_{pose_idx}.png", bg_depth_img)
-            # Save canny edge image
-            bg_color_img = cv2.cvtColor(bg_color_img, cv2.COLOR_BGR2GRAY)
-            edges = cv2.Canny(bg_color_img, 50, 100)
-            cv2.imwrite(f"{video_dir}/bg_edge_{pose_idx}.png", edges)
+            cv2.imwrite(
+                f"{video_dir}/bg_depth_{joint_select_idx}_{pose_idx}.png", bg_depth_img
+            )
+            # # Save canny edge image
+            # bg_color_img = cv2.cvtColor(bg_color_img, cv2.COLOR_BGR2GRAY)
+            # edges = cv2.Canny(bg_color_img, 50, 100)
+            # cv2.imwrite(f"{video_dir}/bg_edge_{pose_idx}.png", edges)
         info["joint_select_idx"] = joint_select_idx
         info["joint_speed"] = joint_speed
     else:
@@ -988,16 +998,17 @@ def render_object_into_block(
     )
     with open(f"{export_dir}/annotations_3d{post_fix}.json", "w") as f:
         json.dump(label_3ds, f)
-    with open(f"{export_dir}/info.json{post_fix}", "w") as f:
+    with open(f"{export_dir}/info{post_fix}.json", "w") as f:
         json.dump(info, f)
+    # Copy meta info
+    shutil.copy(meta_file, f"{export_dir}/meta.json")
     return True
 
 
 if __name__ == "__main__":
     debug = False
     video_mode = True
-    joint_select_idx = 0
-    data_name = "3596"  #
+    data_name = "46944"  #
     data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
     output_dir = "/home/harvey/Data/partnet-mobility-v0/output_v2"
     meta_info = json.load(open(f"{output_dir}/meta.json"))
@@ -1013,20 +1024,22 @@ if __name__ == "__main__":
         "height": 960,
     }
     num_poses = 2
+    num_joint_select_idx = 2
     num_joint_values = 20
 
-    render_object_into_block(
-        data_name,
-        data_dir,
-        output_dir,
-        camera_info,
-        on_list,
-        under_list,
-        other_list,
-        meta_info,
-        num_poses,
-        num_joint_values,
-        video_mode,
-        joint_select_idx,
-        debug,
-    )
+    for joint_select_idx in range(num_joint_select_idx):
+        render_object_into_block(
+            data_name,
+            data_dir,
+            output_dir,
+            camera_info,
+            on_list,
+            under_list,
+            other_list,
+            meta_info,
+            num_poses,
+            num_joint_values,
+            video_mode,
+            joint_select_idx,
+            debug,
+        )
