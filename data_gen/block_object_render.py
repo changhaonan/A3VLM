@@ -1061,18 +1061,37 @@ def launch_multi_process(
                     f"Error processing ({data_id}, {joint_select_idx}): {e}"
                 ),
             )
+            result_objects.append((data_id, joint_select_idx, result))
+        # Collect results with a timeout
+        for data_id, joint_select_idx, result in result_objects:
+            try:
+                status = result.get(timeout=1200)  # Timeout set to 20 mins
+                if not status:
+                    logger.error(
+                        f"Error: {data_id}-{joint_select_idx} processing failed."
+                    )
+            except multiprocessing.TimeoutError:
+                logger.error(
+                    f"Timeout: {data_id}-{joint_select_idx} processing exceeded time limit."
+                )
+            except Exception as e:
+                logger.error(
+                    f"Error: {data_id}-{joint_select_idx} processing failed with exception: {e}."
+                )
+            finally:
+                pbar.update(1)
     pool.close()
     pool.join()
 
 
 if __name__ == "__main__":
     ## Configurations
-    debug = True
+    debug = False
     video_mode = True
     data_name = "46944"  #
     data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
     output_dir = "/home/harvey/Data/partnet-mobility-v0/output_v2"
-    meta_info = json.load(open(f"{output_dir}/meta.json"))
+    meta_info = json.load(open(f"{data_dir}/meta.json"))
     on_list = meta_info["on"]
     under_list = meta_info["under"]
     other_list = meta_info["other"]
@@ -1084,9 +1103,9 @@ if __name__ == "__main__":
         "width": 960,
         "height": 960,
     }
-    num_poses = 2
-    num_joint_select_idx = 2
-    num_joint_values = 20
+    num_poses = 5
+    num_joint_select_idx = 4
+    num_joint_values = 40
 
     data_ids = os.listdir(data_dir)
     data_ids = [data_id for data_id in data_ids if data_id.isdigit()]
