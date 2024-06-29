@@ -12,6 +12,11 @@ import numpy as np
 from urchin import URDF
 from matplotlib import pyplot as plt
 from utils import AxisBBox3D, get_arrow, check_annotations_3d, check_annotations_2d
+from tqdm import tqdm
+import multiprocessing
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 ################################ Utility functions ################################
@@ -1005,8 +1010,64 @@ def render_object_into_block(
     return True
 
 
+###################################### Multi-processing ######################################
+
+
+def launch_multi_process(
+    data_ids,
+    data_dir,
+    output_dir,
+    camera_info,
+    on_list,
+    under_list,
+    other_list,
+    meta_info,
+    num_poses,
+    num_joint_values,
+    num_joint_select_idx,
+    max_process=64,
+    video_mode=False,
+    debug=False,
+):
+    # Assemble tuple
+    data_tuples = []
+    for data_id in data_ids:
+        for joint_select_idx in range(num_joint_select_idx):
+            data_tuples.append((data_id, joint_select_idx))
+    num_processes = min(min(multiprocessing.cpu_count(), len(data_tuples)), max_process)
+    print(f"Process {len(data_tuples)} data with {num_processes} processes")
+    pool = multiprocessing.Pool(processes=num_processes)
+    with tqdm(total=len(data_tuples)) as pbar:
+        result_objects = []
+        for data_id, joint_select_idx in data_tuples:
+            result = pool.apply_async(
+                render_object_into_block,
+                args=(
+                    data_id,
+                    data_dir,
+                    output_dir,
+                    camera_info,
+                    on_list,
+                    under_list,
+                    other_list,
+                    meta_info,
+                    num_poses,
+                    num_joint_values,
+                    video_mode,
+                    joint_select_idx,
+                    debug,
+                ),
+                error_callback=lambda e: logger.error(
+                    f"Error processing ({data_id}, {joint_select_idx}): {e}"
+                ),
+            )
+    pool.close()
+    pool.join()
+
+
 if __name__ == "__main__":
-    debug = False
+    ## Configurations
+    debug = True
     video_mode = True
     data_name = "46944"  #
     data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
@@ -1027,19 +1088,24 @@ if __name__ == "__main__":
     num_joint_select_idx = 2
     num_joint_values = 20
 
-    for joint_select_idx in range(num_joint_select_idx):
-        render_object_into_block(
-            data_name,
-            data_dir,
-            output_dir,
-            camera_info,
-            on_list,
-            under_list,
-            other_list,
-            meta_info,
-            num_poses,
-            num_joint_values,
-            video_mode,
-            joint_select_idx,
-            debug,
-        )
+    data_ids = os.listdir(data_dir)
+    data_ids = [data_id for data_id in data_ids if data_id.isdigit()]
+    # Sort
+    data_ids = sorted(data_ids)
+    data_ids = data_ids[:10]
+    # Render object
+    launch_multi_process(
+        data_ids,
+        data_dir,
+        output_dir,
+        camera_info,
+        on_list,
+        under_list,
+        other_list,
+        meta_info,
+        num_poses,
+        num_joint_values,
+        num_joint_select_idx,
+        video_mode=video_mode,
+        debug=debug,
+    )
