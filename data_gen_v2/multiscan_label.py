@@ -7,7 +7,7 @@ import json
 import numpy as np
 import open3d as o3d
 import matplotlib.pyplot as plt
-from data_utils import AxisBBox3D, get_arrow
+from data_utils import AxisBBox3D, get_arrow, check_annotations_2d
 from queue import PriorityQueue
 
 ######################## General 3D tools ########################
@@ -109,7 +109,7 @@ if __name__ == "__main__":
         type=str,
         default="/home/harvey/Data/multi_scan_art/articulated_dataset/articulated_objects.train.h5",
     )
-    parser.add_argument("--data_id", type=str, default="scene_00000_01")
+    parser.add_argument("--data_id", type=str, default="scene_00010_00")
     parser.add_argument("--enable_filter", type=bool, default=True)
     args = parser.parse_args()
 
@@ -226,7 +226,6 @@ if __name__ == "__main__":
 
         # Update the existing num parts
         exist_num_parts += np.max(obj_ins_seg) + 1
-        print(exist_num_parts)
         # [Debug]: Visualize each part
         if vis:
             part_bboxes_o3d = [bbox.get_bbox_o3d() for bbox in part_bboxes]
@@ -240,6 +239,8 @@ if __name__ == "__main__":
     else:
         mesh = None
 
+    if obj_pts_all == []:
+        assert False, "No parts found in the scene!"
     # Traverse frames
     obj_pts_all = np.vstack(obj_pts_all)
     obj_sem_seg = np.hstack(obj_seg_all)
@@ -318,73 +319,16 @@ if __name__ == "__main__":
                 )
                 image = cv2.imread(image_file)
                 # Project the annotation
-                bbox = AxisBBox3D(
-                    bbox_3d[:3],
-                    bbox_3d[3:6],
-                    bbox_3d[6:9],
-                    np.array(axis_3d).reshape(2, 3),
-                )
-                bbox_points = bbox.get_bbox_3d_proj(
+                vis_image = check_annotations_2d(
+                    image,
+                    bbox_3d,
+                    axis_3d,
                     intrinsics,
-                    np.linalg.inv(transform),
-                    0,
-                    1,
-                    image.shape[1],
-                    image.shape[0],
+                    transform=np.linalg.inv(transform),
                 )
-                axis_points = bbox.get_axis_3d_proj(
-                    intrinsics,
-                    np.linalg.inv(transform),
-                    0,
-                    1,
-                    image.shape[1],
-                    image.shape[0],
-                )
-                # Draw the bbox
-                for i, j in zip(
-                    [0, 0, 0, 1, 1, 2, 2, 6, 5, 4, 3, 3],
-                    [1, 2, 3, 6, 7, 7, 5, 4, 4, 7, 6, 5],
-                ):
-                    cv2.line(
-                        image,
-                        (
-                            int(bbox_points[i][0] * image.shape[1]),
-                            int(bbox_points[i][1] * image.shape[0]),
-                        ),
-                        (
-                            int(bbox_points[j][0] * image.shape[1]),
-                            int(bbox_points[j][1] * image.shape[0]),
-                        ),
-                        (0, 255, 0),
-                        4,
-                        lineType=cv2.LINE_8,
-                    )
-                # Draw the lines
-                for i, j in zip([0], [1]):
-                    cv2.line(
-                        image,
-                        (
-                            int(axis_points[i][0] * image.shape[1]),
-                            int(axis_points[i][1] * image.shape[0]),
-                        ),
-                        (
-                            int(axis_points[j][0] * image.shape[1]),
-                            int(axis_points[j][1] * image.shape[0]),
-                        ),
-                        (0, 0, 255),
-                        4,
-                        lineType=cv2.LINE_8,
-                    )
-                # Draw the lines
-                # reshape the height to be 480 for vis
-                image = cv2.resize(
-                    image, (int(480 * image.shape[1] / image.shape[0]), 480)
-                )
-                # cv2.imshow("image", image)
-                # cv2.waitKey(0)
                 cv2.imwrite(
                     os.path.join(export_dir, f"{part_id:04d}_{frame_idx+1:04d}.png"),
-                    image,
+                    vis_image,
                 )
 
     # Export the annotation

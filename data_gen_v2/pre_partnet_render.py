@@ -8,7 +8,7 @@ import numpy as np
 import os
 import json
 from urchin import URDF
-from block_object_render import generate_robot_cfg, generate_robot_mesh
+from data_gen_v2.partnet_render import generate_robot_cfg, generate_robot_mesh
 
 
 def pre_block_render(data_dir, output_dir, on_cat_list, under_cat_list, block_list):

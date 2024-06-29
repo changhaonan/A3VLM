@@ -329,7 +329,13 @@ def check_annotations_3d(points, bbox_3d, axis_3d, points_mask, title=""):
     o3d.visualization.draw_geometries([pcd, bbox, arrow_o3d, origin])
 
 
-def check_annotations_2d(image, bbox_3d, axis_3d, intrinsic, title=""):
+def check_annotations_2d(
+    image, bbox_3d, axis_3d, intrinsic, transform=np.eye(4), title=""
+):
+    if isinstance(axis_3d, list):
+        axis_3d = np.array(axis_3d).reshape(2, 3)
+    if isinstance(bbox_3d, list):
+        bbox_3d = np.array(bbox_3d)
     image = image.copy()
     # Get project
     bbox = AxisBBox3D(
@@ -339,10 +345,10 @@ def check_annotations_2d(image, bbox_3d, axis_3d, intrinsic, title=""):
         axis=axis_3d.reshape(2, 3),
     )
     bbox_points = bbox.get_bbox_3d_proj(
-        intrinsic, np.eye(4), 0, 1, image.shape[1], image.shape[0]
+        intrinsic, transform, 0, 1, image.shape[1], image.shape[0]
     )
     axis_points = bbox.get_axis_3d_proj(
-        intrinsic, np.eye(4), 0, 1, image.shape[1], image.shape[0]
+        intrinsic, transform, 0, 1, image.shape[1], image.shape[0]
     )
     # Draw the bbox
     for i, j in zip(
@@ -386,7 +392,7 @@ def check_annotations_2d(image, bbox_3d, axis_3d, intrinsic, title=""):
             3,
         )
     # Reshape the image to height 480
-    resize_shape = (480, int(480 / image.shape[0] * image.shape[1]))
+    resize_shape = (int(480 * image.shape[1] / image.shape[0]), 480)
     image = cv2.resize(image, resize_shape)
     return image
 
