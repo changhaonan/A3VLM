@@ -13,6 +13,7 @@ from urchin import URDF
 from matplotlib import pyplot as plt
 from data_utils import AxisBBox3D, get_arrow, check_annotations_3d, check_annotations_2d
 from tqdm import tqdm
+from partnet_modifier import limit_modifier
 import multiprocessing
 import logging
 
@@ -227,10 +228,14 @@ def generate_robot_cfg(
                         + 0.5
                     )
         if joint.limit is None:
-            joint_limit = [-np.pi, np.pi]
+            joint_limit = [-np.pi / 2, np.pi / 2]
         else:
             joint_limit = [joint.limit.lower, joint.limit.upper]
-        limit_low, limit_high = joint_limit[0], joint_limit[1]
+        limit_low, limit_high = limit_modifier(
+            kwargs.get("model_cat", None),
+            joint.joint_type,
+            [joint_limit[0], joint_limit[1]],
+        )
         joint_value = joint_value_sample * (limit_high - limit_low) + limit_low
         if kinematic_level > 1:
             # Existing hierarchical joint, disable the joint
@@ -774,7 +779,7 @@ def render_object_into_block(
     if data_id not in meta_info["meta"]:
         # Skip if the object is not in the meta info
         return False
-    rng = np.random.RandomState(int(data_id))
+    rng = np.random.RandomState(int(data_id) + int(joint_select_idx))
     export_dir = os.path.join(output_dir, data_id)
     os.makedirs(export_dir, exist_ok=True)
     sample_type = "xy"
@@ -870,6 +875,7 @@ def render_object_into_block(
             joint_value_idx=joint_value_idx,
             joint_speed=joint_speed,
             joint_select_idx=joint_select_idx,
+            model_cat=meta["model_cat"],
         )
         if robot_link_mesh_map is None:
             return False
@@ -1100,11 +1106,33 @@ def launch_multi_process(
 
 if __name__ == "__main__":
     ## Configurations
+    import argparse
+
     debug = False
     video_mode = True
-    data_name = "148"
-    data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
-    output_dir = "/home/harvey/Data/partnet-mobility-v0/output_v2"
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("data_name", type=str, default="all", help="Data name")
+    parser.add_argument(
+        "data_dir", type=str, default="/home/harvey/Data/partnet-mobility-v0/dataset"
+    )
+    parser.add_argument(
+        "output_dir",
+        type=str,
+        default="/home/harvey/Data/partnet-mobility-v0/output_v2",
+    )
+    parser.add_argument("--num_poses", type=int, default=2)
+    parser.add_argument("--num_joint_select_idx", type=int, default=1)
+    parser.add_argument("--num_joint_values", type=int, default=40)
+    
+    args = parser.parse_args()
+    data_dir = args.data_dir
+    output_dir = args.output_dir
+    data_name = args.data_name
+    num_poses = args.num_poses
+    num_joint_select_idx = args.num_joint_select_idx
+    num_joint_values = args.num_joint_values
+
     meta_info = json.load(open(f"{data_dir}/meta.json"))
     on_list = meta_info["on"]
     under_list = meta_info["under"]
@@ -1117,18 +1145,15 @@ if __name__ == "__main__":
         "width": 960,
         "height": 960,
     }
-    num_poses = 5
-    num_joint_select_idx = 4
-    num_joint_values = 40
-
     data_ids = os.listdir(data_dir)
     data_ids = meta_info["all"] if data_name == "all" else [data_name]
     # Sort
     data_ids = sorted(data_ids)
     data_ids = data_ids[:10]
-    solo_prob = 1.0
+    solo_prob = 0.25
     skip_existing = True
 
+    # Launch
     launch_multi_process(
         data_ids,
         data_dir,
@@ -1145,7 +1170,7 @@ if __name__ == "__main__":
         solo_prob=solo_prob,
         debug=debug,
     )
-    
+
     # if data_name == "all":
     #     # Render object
     #     launch_multi_process(
