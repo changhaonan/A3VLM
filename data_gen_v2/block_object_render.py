@@ -11,7 +11,7 @@ import trimesh
 import numpy as np
 from urchin import URDF
 from matplotlib import pyplot as plt
-from utils import AxisBBox3D, get_arrow, check_annotations_3d, check_annotations_2d
+from data_utils import AxisBBox3D, get_arrow, check_annotations_3d, check_annotations_2d
 from tqdm import tqdm
 import multiprocessing
 import logging
@@ -243,7 +243,13 @@ def generate_robot_cfg(
 
 
 def generate_block_updown_setup(
-    data_id, on_list, under_list, other_list, meta_info, rng=np.random.RandomState(0)
+    data_id,
+    on_list,
+    under_list,
+    other_list,
+    meta_info,
+    solo_prob,
+    rng=np.random.RandomState(0),
 ):
     """
     On list is the list of objects that are placed upon other objects.
@@ -253,7 +259,12 @@ def generate_block_updown_setup(
     goal_bbox_list = []
     align_direction_list = []
     data_ids = []
-    if data_id in on_list:
+    if data_id in other_list or rng.rand() < solo_prob:
+        # If the object is not in the on_list or under_list, it is a standalone object
+        goal_bbox_list.append(np.array([[-1.0, -1.0, -1.0], [1.0, 1.0, 1.0]]))
+        align_direction_list.append(np.array([0.0, 0.0, 1.0]))
+        data_ids.append(data_id)
+    elif data_id in on_list:
         on_bbox_list = [
             [[0.0, 0.0, 0.0], [0.5, 0.5, 0.6]],
             [[-0.5, 0.0, 0.0], [0.0, 0.5, 0.6]],
@@ -287,10 +298,10 @@ def generate_block_updown_setup(
         align_direction_list.append(np.array([0.0, 0.0, 1.0]))
         on_bbox_list = np.array(
             [
-                [[0.0, 0.0, 0.0], [1.0, 1.0, 0.3]],
-                [[-1.0, 0.0, 0.0], [0.0, 1.0, 0.3]],
-                [[0.0, -1.0, 0.0], [1.0, 0.0, 0.3]],
-                [[-1.0, -1.0, 0.0], [0.0, 0.0, 0.3]],
+                [[0.0, 0.0, 0.0], [0.8, 0.8, 0.3]],
+                [[-0.8, 0.0, 0.0], [0.0, 0.8, 0.3]],
+                [[0.0, -0.8, 0.0], [0.8, 0.0, 0.3]],
+                [[-0.8, -0.8, 0.0], [0.0, 0.0, 0.3]],
             ]
         )
         on_bbox_list[:, :, 0] = on_bbox_list[:, :, 0] * scaled_obj_size[0] / 2
@@ -301,11 +312,8 @@ def generate_block_updown_setup(
         data_ids.append(on_data_id)
         goal_bbox_list.append(np.array(on_bbox_list[on_bbox_idxs[0]]))
         align_direction_list.append(np.array([0.0, 0.0, -1.0]))
-    elif data_id in other_list:
-        # If the object is not in the on_list or under_list, it is a standalone object
-        goal_bbox_list.append(np.array([[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]]))
-        align_direction_list.append(np.array([0.0, 0.0, 1.0]))
-        data_ids.append(data_id)
+    else:
+        raise ValueError(f"Unknown object category: {data_id}")
     return data_ids, goal_bbox_list, align_direction_list
 
 
@@ -421,7 +429,6 @@ def compute_bbox_transform(
     obj_max = np.max(init_bbox, axis=0)
     obj_size = obj_max - obj_min
     robot_center = (obj_min + obj_max) / 2
-
     goal_min = np.min(goal_bbox, axis=0)
     goal_max = np.max(goal_bbox, axis=0)
     goal_size = goal_max - goal_min
@@ -760,6 +767,7 @@ def render_object_into_block(
     num_joint_values,
     video_mode=False,
     joint_select_idx=0,
+    solo_prob=0.1,
     debug=False,
 ):
     """Render an object into a bbox. This bbox is axis-aligned."""
@@ -848,7 +856,7 @@ def render_object_into_block(
             # Generate random set-up
             data_ids, goal_bbox_list, align_direction_list = (
                 generate_block_updown_setup(
-                    data_id, on_list, under_list, other_list, meta_info, rng
+                    data_id, on_list, under_list, other_list, meta_info, solo_prob, rng
                 )
             )
         robot_link_mesh_map, robot_visual_map, obj_transforms = generate_robot_meshes(
@@ -968,7 +976,10 @@ def render_object_into_block(
             bg_depth_img = render_result["bg_depth"][pose_idx]
             # Save normalized depth image
             depth_max = np.max(bg_depth_img)
-            depth_min = np.min(bg_depth_img[bg_depth_img > 0])
+            if bg_depth_img[bg_depth_img > 0].shape[0] == 0:
+                depth_min = np.min(bg_depth_img)
+            else:
+                depth_min = np.min(bg_depth_img[bg_depth_img > 0])
             bg_depth_img[bg_depth_img == 0] = depth_max
             bg_depth_img = (
                 (bg_depth_img - depth_min) / (depth_max - depth_min + 1e-6) * 255
@@ -1027,7 +1038,9 @@ def launch_multi_process(
     num_joint_select_idx,
     max_process=64,
     video_mode=False,
+    solo_prob=0.1,
     debug=False,
+    wait_time=1200,
 ):
     # Assemble tuple
     data_tuples = []
@@ -1055,6 +1068,7 @@ def launch_multi_process(
                     num_joint_values,
                     video_mode,
                     joint_select_idx,
+                    solo_prob,
                     debug,
                 ),
                 error_callback=lambda e: logger.error(
@@ -1065,7 +1079,7 @@ def launch_multi_process(
         # Collect results with a timeout
         for data_id, joint_select_idx, result in result_objects:
             try:
-                status = result.get(timeout=1200)  # Timeout set to 20 mins
+                status = result.get(timeout=wait_time)  # Timeout set to 20 mins
                 if not status:
                     logger.error(
                         f"Error: {data_id}-{joint_select_idx} processing failed."
@@ -1088,7 +1102,7 @@ if __name__ == "__main__":
     ## Configurations
     debug = False
     video_mode = True
-    data_name = "46944"  #
+    data_name = "148"
     data_dir = "/home/harvey/Data/partnet-mobility-v0/dataset"
     output_dir = "/home/harvey/Data/partnet-mobility-v0/output_v2"
     meta_info = json.load(open(f"{data_dir}/meta.json"))
@@ -1108,11 +1122,13 @@ if __name__ == "__main__":
     num_joint_values = 40
 
     data_ids = os.listdir(data_dir)
-    data_ids = [data_id for data_id in data_ids if data_id.isdigit()]
+    data_ids = meta_info["all"] if data_name == "all" else [data_name]
     # Sort
     data_ids = sorted(data_ids)
     data_ids = data_ids[:10]
-    # Render object
+    solo_prob = 1.0
+    skip_existing = True
+
     launch_multi_process(
         data_ids,
         data_dir,
@@ -1126,5 +1142,41 @@ if __name__ == "__main__":
         num_joint_values,
         num_joint_select_idx,
         video_mode=video_mode,
+        solo_prob=solo_prob,
         debug=debug,
     )
+    
+    # if data_name == "all":
+    #     # Render object
+    #     launch_multi_process(
+    #         data_ids,
+    #         data_dir,
+    #         output_dir,
+    #         camera_info,
+    #         on_list,
+    #         under_list,
+    #         other_list,
+    #         meta_info,
+    #         num_poses,
+    #         num_joint_values,
+    #         num_joint_select_idx,
+    #         video_mode=video_mode,
+    #         solo_prob=solo_prob,
+    #         debug=debug,
+    #     )
+    # else:
+    #     # Render object
+    #     render_object_into_block(
+    #         data_name,
+    #         data_dir,
+    #         output_dir,
+    #         camera_info,
+    #         on_list,
+    #         under_list,
+    #         other_list,
+    #         meta_info,
+    #         num_poses,
+    #         num_joint_values,
+    #         video_mode=video_mode,
+    #         debug=debug,
+    #     )

@@ -1,4 +1,6 @@
-"""Prepare for block rendering. The main goal is to compute static bbox."""
+"""Prepare for block rendering. The main goal is to compute static bbox.
+Generate meta information.
+"""
 
 import tqdm
 import trimesh
@@ -9,13 +11,14 @@ from urchin import URDF
 from block_object_render import generate_robot_cfg, generate_robot_mesh
 
 
-def pre_block_render(data_dir, output_dir, on_cat_list, under_cat_list):
+def pre_block_render(data_dir, output_dir, on_cat_list, under_cat_list, block_list):
     data_names = os.listdir(data_dir)
     data_names = [name for name in data_names if name.isdigit()]
     meta_infos = {
         "on": [],
         "under": [],
         "other": [],
+        "all": [],
         "meta": {},
     }
     rng = np.random.RandomState(0)
@@ -24,13 +27,21 @@ def pre_block_render(data_dir, output_dir, on_cat_list, under_cat_list):
         with open(meta_file, "r") as f:
             meta_info = json.load(f)
         model_cat = meta_info["model_cat"]
-        if model_cat in on_cat_list:
+        if model_cat in block_list:
+            continue
+        elif model_cat in on_cat_list:
             meta_infos["on"].append(data_name)
         elif model_cat in under_cat_list:
             meta_infos["under"].append(data_name)
         else:
             meta_infos["other"].append(data_name)
-
+        assert (
+            (model_cat in on_cat_list)
+            or (model_cat in under_cat_list)
+            or (model_cat in block_list)
+            or (model_cat in other_list)
+        ), f"Unknown model category: {model_cat}"
+        meta_infos["all"].append(data_name)  # All valid data
         # Compute the bbox as background
         data_file = f"{data_dir}/{data_name}/mobility.urdf"
         try:
@@ -57,7 +68,7 @@ def pre_block_render(data_dir, output_dir, on_cat_list, under_cat_list):
             "bbox": robot_bbox.tolist(),
         }
     # Export meta info
-    meta_file = os.path.join(output_dir, "meta.json")
+    meta_file = os.path.join(data_dir, "meta.json")
     with open(meta_file, "w") as f:
         json.dump(meta_infos, f, indent=4)
 
@@ -75,6 +86,11 @@ if __name__ == "__main__":
         "Microwave",
         "Mouse",
         "Box",
+        "Bottle",
+        "Bucket",
+        "Camera",
+        "CoffeeMachine",
+        "Display",
         "TrashCan",
         "KitchenPot",
         "Pliers",
@@ -86,18 +102,35 @@ if __name__ == "__main__":
         "Scissors",
         "Stapler",
         "Kettle",
+        "Keyboard",
         "USB",
         "Faucet",
         "Phone",
         "Eyeglasses",
+        "Clock",
+        "Globe",
+        "Knife",
+        "Oven",
+        "Pen",
+        "Printer",
+        "Refrigerator",
+        "Switch",
     ]
     under_cat_list = ["StorageFurniture", "Table", "Dishwasher"]
     other_list = [
         "Door",
-        "Refrigerator",
         "Suitcase",
         "FoldingChair",
         "Toilet",
         "WashingMachine",
+        "Cart",
+        "Chair",
+        "Fan",
+        "Window",
     ]
-    pre_block_render(data_dir, output_dir, on_cat_list, under_cat_list)
+    block_list = [
+        "Phone",
+        "Keyboard",
+        "Remote",
+    ]
+    pre_block_render(data_dir, output_dir, on_cat_list, under_cat_list, block_list)
