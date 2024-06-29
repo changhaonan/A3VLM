@@ -22,3 +22,7 @@ Thumbs.db
 *.pyo
 *.pyd
 **/__pycache__/**
+
+output
+dataset
+multi_scan

@@ -227,7 +227,7 @@ if __name__ == "__main__":
     argparser.add_argument("--seed", type=int, default=0, help="Random seed")
     argparser.add_argument("--version", type=int, default=0, help="Version of the dataset")
     argparser.add_argument("--data_dir", type=str, default="test_data")
-    argparser.add_argument("--data_name", type=str, default=None)
+    argparser.add_argument("--data_name", type=str, default="all")
     argparser.add_argument("--output_dir", type=str, default="output")
     argparser.add_argument("--num_poses", type=int, default=5)
     argparser.add_argument("--light_radius_min", type=float, default=3.0)
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     # load_joint_value = True
     only_front = True
 
-    if data_name is not None:
+    if data_name is not None or data_name is not "all":
         start_time = time.time()
         render_data_item_with_idx(data_name, data_dir, output_dir, num_poses, camera_info, cam_radius_max, cam_radius_min, num_joint_value, only_front, load_camera_pose, load_joint_value)
         end_time = time.time()
