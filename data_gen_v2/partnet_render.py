@@ -793,6 +793,7 @@ def render_object_into_block(
             with open(exist_info_file, "r") as f:
                 exist_info = json.load(f)
             if len(exist_info["camera_poses"]) == num_joint_values * num_poses:
+                print(f"Skip {data_id}... as it already exists.")
                 return True
     sample_type = "xy"
     only_front = True
@@ -1124,6 +1125,7 @@ if __name__ == "__main__":
 
     debug = False
     video_mode = True
+    skip_exist = True
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_name", type=str, default="9748", help="Data name")
@@ -1165,8 +1167,7 @@ if __name__ == "__main__":
     data_ids = sorted(data_ids)
     data_ids = data_ids[:2]
     solo_prob = 0.25
-    skip_exist = True
-
+    
     # # Launch [DEBUG]
     # launch_multi_process(
     #     data_ids,
