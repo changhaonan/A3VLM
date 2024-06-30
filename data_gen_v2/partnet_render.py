@@ -774,6 +774,7 @@ def render_object_into_block(
     joint_select_idx=0,
     solo_prob=0.1,
     debug=False,
+    skip_exist=False,
 ):
     """Render an object into a bbox. This bbox is axis-aligned."""
     if data_id not in meta_info["meta"]:
@@ -782,6 +783,17 @@ def render_object_into_block(
     rng = np.random.RandomState(int(data_id) + int(joint_select_idx))
     export_dir = os.path.join(output_dir, data_id)
     os.makedirs(export_dir, exist_ok=True)
+    # Check existed files
+    if skip_exist:
+        if not video_mode:
+            exist_info_file = os.path.join(export_dir, "info.json")
+        else:
+            exist_info_file = os.path.join(export_dir, f"info_{joint_select_idx}.json")
+        if os.path.exists(exist_info_file):
+            with open(exist_info_file, "r") as f:
+                exist_info = json.load(f)
+            if len(exist_info["camera_poses"]) == num_joint_values * num_poses:
+                return True
     sample_type = "xy"
     only_front = True
     keep_ratio = False
@@ -801,7 +813,7 @@ def render_object_into_block(
     }
     info = {}
     info["camera_info"] = camera_info
-    meta_file = f"{data_dir}/{data_name}/meta.json"
+    meta_file = f"{data_dir}/{data_id}/meta.json"
     with open(meta_file, "r") as f:
         meta = json.load(f)
     info["model_cat"] = meta["model_cat"]
@@ -1047,6 +1059,7 @@ def launch_multi_process(
     solo_prob=0.1,
     debug=False,
     wait_time=1200,
+    skip_exist=False,
 ):
     # Assemble tuple
     data_tuples = []
@@ -1076,6 +1089,7 @@ def launch_multi_process(
                     joint_select_idx,
                     solo_prob,
                     debug,
+                    skip_exist,
                 ),
                 error_callback=lambda e: logger.error(
                     f"Error processing ({data_id}, {joint_select_idx}): {e}"
@@ -1112,20 +1126,20 @@ if __name__ == "__main__":
     video_mode = True
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("data_name", type=str, default="all", help="Data name")
+    parser.add_argument("--data_name", type=str, default="9748", help="Data name")
     parser.add_argument(
-        "data_dir", type=str, default="/home/harvey/Data/partnet-mobility-v0/dataset"
+        "--data_dir", type=str, default="/home/harvey/Data/partnet-mobility-v0/dataset"
     )
     parser.add_argument(
-        "output_dir",
+        "--output_dir",
         type=str,
         default="/home/harvey/Data/partnet-mobility-v0/output_v2",
     )
     parser.add_argument("--num_poses", type=int, default=2)
     parser.add_argument("--num_joint_select_idx", type=int, default=1)
     parser.add_argument("--num_joint_values", type=int, default=40)
-    
     args = parser.parse_args()
+
     data_dir = args.data_dir
     output_dir = args.output_dir
     data_name = args.data_name
@@ -1149,59 +1163,62 @@ if __name__ == "__main__":
     data_ids = meta_info["all"] if data_name == "all" else [data_name]
     # Sort
     data_ids = sorted(data_ids)
-    data_ids = data_ids[:10]
+    data_ids = data_ids[:2]
     solo_prob = 0.25
-    skip_existing = True
+    skip_exist = True
 
-    # Launch
-    launch_multi_process(
-        data_ids,
-        data_dir,
-        output_dir,
-        camera_info,
-        on_list,
-        under_list,
-        other_list,
-        meta_info,
-        num_poses,
-        num_joint_values,
-        num_joint_select_idx,
-        video_mode=video_mode,
-        solo_prob=solo_prob,
-        debug=debug,
-    )
+    # # Launch [DEBUG]
+    # launch_multi_process(
+    #     data_ids,
+    #     data_dir,
+    #     output_dir,
+    #     camera_info,
+    #     on_list,
+    #     under_list,
+    #     other_list,
+    #     meta_info,
+    #     num_poses,
+    #     num_joint_values,
+    #     num_joint_select_idx,
+    #     video_mode=video_mode,
+    #     solo_prob=solo_prob,
+    #     debug=debug,
+    #     skip_exist=skip_exist,
+    # )
 
-    # if data_name == "all":
-    #     # Render object
-    #     launch_multi_process(
-    #         data_ids,
-    #         data_dir,
-    #         output_dir,
-    #         camera_info,
-    #         on_list,
-    #         under_list,
-    #         other_list,
-    #         meta_info,
-    #         num_poses,
-    #         num_joint_values,
-    #         num_joint_select_idx,
-    #         video_mode=video_mode,
-    #         solo_prob=solo_prob,
-    #         debug=debug,
-    #     )
-    # else:
-    #     # Render object
-    #     render_object_into_block(
-    #         data_name,
-    #         data_dir,
-    #         output_dir,
-    #         camera_info,
-    #         on_list,
-    #         under_list,
-    #         other_list,
-    #         meta_info,
-    #         num_poses,
-    #         num_joint_values,
-    #         video_mode=video_mode,
-    #         debug=debug,
-    #     )
+    if data_name == "all":
+        # Render object
+        launch_multi_process(
+            data_ids,
+            data_dir,
+            output_dir,
+            camera_info,
+            on_list,
+            under_list,
+            other_list,
+            meta_info,
+            num_poses,
+            num_joint_values,
+            num_joint_select_idx,
+            video_mode=video_mode,
+            solo_prob=solo_prob,
+            debug=debug,
+            skip_exist=skip_exist,
+        )
+    else:
+        # Render object
+        render_object_into_block(
+            data_name,
+            data_dir,
+            output_dir,
+            camera_info,
+            on_list,
+            under_list,
+            other_list,
+            meta_info,
+            num_poses,
+            num_joint_values,
+            video_mode=video_mode,
+            debug=debug,
+            skip_exist=skip_exist,
+        )
