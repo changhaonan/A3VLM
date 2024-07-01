@@ -1,5 +1,5 @@
 """Generate mesh for a given configuration."""
-
+import os
 import numpy as np
 from packaging import version
 
@@ -8,18 +8,17 @@ if version.parse(np.__version__) >= version.parse("1.20.0"):
     # Create an alias for np.int
     np.int = int
     np.float = float
+os.environ["PYOPENGL_PLATFORM"] = "egl"  # For headless rendering
 
 import argparse
 from urdfpy import URDF
 import trimesh
 import time
-import os
 import json
 import tqdm
 import cv2
 import copy
 from render_tools import render_parts
-
 from multiprocessing import Pool, cpu_count
 from functools import partial
 
