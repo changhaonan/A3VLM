@@ -759,7 +759,7 @@ if __name__ == "__main__":
     argparser.add_argument("--output_dir", type=str, required=True)
     argparser.add_argument("--data_name", type=str, default="all")
     argparser.add_argument("--gaussian_noise", type=float, default=0.00, help="Gaussian noise")
-    argparser.add_argument("--random_drop_rate", type=float, default=0.3, help="Random drop rate")
+    argparser.add_argument("--random_drop_rate", type=float, default=0.0, help="Random drop rate")
     argparser.add_argument("--sample_size", type=int, default=32768, help="Numbe of points to sample")
     argparser.add_argument("--use_world_coordinate", type=bool, default=True, help="Use world coordinate")
     argparser.add_argument("--enable_normal", action="store_true", help="Enable normal")

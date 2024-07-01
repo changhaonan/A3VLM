@@ -268,7 +268,7 @@ if __name__ == "__main__":
     # load_joint_value = True
     only_front = True
 
-    if data_name is not None or data_name is not "all":
+    if data_name is not None and data_name != "all":
         start_time = time.time()
         render_data_item_with_idx(data_name, data_dir, output_dir, num_poses, camera_info, cam_radius_max, cam_radius_min, num_joint_value, only_front, load_camera_pose, load_joint_value)
         end_time = time.time()

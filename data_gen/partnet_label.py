@@ -26,7 +26,7 @@ from vqa_task_construction import (
 import xml.etree.ElementTree as ET
 from utils import read_ply_ascii, convert_depth_to_color
 from scipy.spatial.transform import Rotation as R
-from point_render import BBox3D
+from point_render import BBox3D, farthest_point_sample
 
 # import urdfpy
 from tqdm import tqdm
@@ -40,8 +40,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 logger.setLevel(logging.INFO)
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
-
-from handal_label import farthest_point_sample
 
 
 ################################# Utils #################################
