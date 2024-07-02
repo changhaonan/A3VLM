@@ -38,7 +38,7 @@ python partnet_label.py --data_name="all" --data_dir=${PartNet-Mobility_path} --
 
 ## Check the results
 
-You mean browse the output folder. For a specific object, for example 149, the annotation visualization is saved in `${output_path}/149/raw_images/visual_images`.
+You can browse the output folder to check the annotation result. For a specific object, for example 149, the annotation visualization is saved in `${output_path}/149/raw_images/visual_images`.
 
 For the following how to use these data, please check the model part of this repo.
 
