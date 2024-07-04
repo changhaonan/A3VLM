@@ -19,7 +19,6 @@ import logging
 
 os.environ["PYOPENGL_PLATFORM"] = "egl"  # Add support for headless rendering
 logger = logging.getLogger(__name__)
-os.environ["PYOPENGL_PLATFORM"] = "egl"
 
 ################################ Utility functions ################################
 def get_pointcloud(
