@@ -16,10 +16,15 @@ python multiscan_label.py
 
 1. Run pre-process.
 ```
-python pre_multiscan.py
+python pre_partnet_render.py
 ```
 
 2. Run render.
 ```
 python partnet_render.py
+```
+
+3. Do SD augmentation (Optional)
+```
+python data_augment_sd.py
 ```

@@ -18,7 +18,7 @@ import multiprocessing
 import logging
 
 logger = logging.getLogger(__name__)
-
+os.environ["PYOPENGL_PLATFORM"] = "egl"
 
 ################################ Utility functions ################################
 def get_pointcloud(
@@ -1124,7 +1124,7 @@ if __name__ == "__main__":
     import argparse
 
     debug = False
-    video_mode = True
+    video_mode = False
     skip_exist = True
 
     parser = argparse.ArgumentParser()
@@ -1166,7 +1166,7 @@ if __name__ == "__main__":
     # Sort
     data_ids = sorted(data_ids)
     data_ids = data_ids[:2]
-    solo_prob = 0.25
+    solo_prob = 0.25  # Probability of rendering a single object
     
     # # Launch [DEBUG]
     # launch_multi_process(
