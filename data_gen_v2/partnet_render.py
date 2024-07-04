@@ -17,6 +17,7 @@ from partnet_modifier import limit_modifier
 import multiprocessing
 import logging
 
+os.environ["PYOPENGL_PLATFORM"] = "egl"  # Add support for headless rendering
 logger = logging.getLogger(__name__)
 os.environ["PYOPENGL_PLATFORM"] = "egl"
 
