@@ -26,3 +26,5 @@ Thumbs.db
 output
 dataset
 multi_scan
+
+**/vqa_logs/**

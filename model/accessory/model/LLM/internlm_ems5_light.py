@@ -37,19 +37,22 @@ class Transformer(nn.Module):
             
     def _build_llm(self):
         if self.args.load_pretrained_llm:
-            self.llm = AutoModelForCausalLM.from_pretrained(
-            "Path_TO/internlm2-7b-original", trust_remote_code=True,
-            attn_implementation="flash_attention_2"
-            )
-        else:
-            self.llm = AutoModelForCausalLM.from_config(
-                AutoConfig.from_pretrained(
-                    "Path_TO/internlm2-7b-original",  # todo change
-                    trust_remote_code=True,
-                    attn_implementation="flash_attention_2"
-                ), trust_remote_code=True
-            )
+            print("loading pretrained llm from HF InternLM 7B")
 
+            try:
+                # when setting the HF offline
+                self.llm = AutoModelForCausalLM.from_pretrained(
+                    # NOTE You need to change this!
+                    # "Path_TO/internlm2-7b-original", trust_remote_code=True,
+                    "/mnt/petrelfs/huangsiyuan/ckpts/internlm2-7b-original", trust_remote_code=True,
+                    attn_implementation="flash_attention_2"
+                )
+            except Exception as e:
+                            # when not setting the HF Offline:
+                self.llm = AutoModelForCausalLM.from_pretrained("internlm/internlm2-7b", torch_dtype=torch.float16, trust_remote_code=True)
+        else:
+            print("Currently, only support the pre-trained version of interlm")
+            
     def _build_visual(self):
         example_t = torch.rand(1)  # an example tensor for probing the current default dtype and device
         default_dtype = torch.get_default_dtype()

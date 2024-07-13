@@ -21,18 +21,13 @@ echo $PORT
 export MASTER_PORT=$PORT
 
 MODEL=internlm_ems5_light 
-config=resample_args_query.json
-
-llama_path="/mnt/petrelfs/XXXXX/data/llama2"
-llama_config="$llama_path"/7B/params.json
 tokenizer_path=$PATH_TO_PRETRAIN/tokenizer.model
 
-vqa_data=demo
+vqa_data=/mnt/lustre/huangsiyuan/A3VLM/model/accessory/demo_data/demo.json
 torchrun --nproc-per-node=1 --master_port=$PORT eval_affordance_v2.py \
     --llama_type ${MODEL} \
-    --llama_config ${llama_config} \
     --tokenizer_path ${tokenizer_path} \
     --pretrained_path ${pretrained_path} \
     --dataset ${vqa_data} \
-    --batch_size 8 --input_size 448 \
+    --batch_size 8 --input_size 1024 \
     --model_parallel_size 1 --addition_flag ${addition_flag} --remove_space 

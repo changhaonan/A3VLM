@@ -25,4 +25,9 @@ If you want to reproduce the reported performance, you need:
 If you have limited GPU memory, please check the 'eval_affordance_with_quant.py'
 
 ## Inference with 7B
-When you have limited GPU (even with quant, still cannot afford), you can check our 7B model with InternLM as the language backbone [Huggingface](https://huggingface.co/SiyuanH/A3VLM7B). Remember set the "model_type" to be "internlm_ems5_light" in the script. And modify the lines 41 with 47 in accessory/model/LLM/inmternlm_ems5_light.py yp point to the actual path.
+When you have limited GPU (even with quant, still cannot afford), you can check our 7B model with InternLM as the language backbone [Huggingface](https://huggingface.co/SiyuanH/A3VLM7B). Remember set the "model_type" to be "internlm_ems5_light" in the script. And modify the lines 41 with 47 in accessory/model/LLM/inmternlm_ems5_light.py and point to the actual path.
+
+Also, due to the original internlm loading problem, you need the access to the InternLM ckpt when inference.
+
+## Infer with the demo images:
+We provide the demo figures and required json format in the demo_data folder, remember to change the image path in the json.
