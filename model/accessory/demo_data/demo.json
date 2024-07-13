@@ -1,0 +1,41 @@
+[
+    {
+        "image": "/mnt/lustre/huangsiyuan/A3VLM/model/accessory/demo_data/suitcase.png",
+        "conversations": [
+            {
+                "from": "human",
+                "value": "Detect all manipulable object parts and provide their 3D bounding boxes."
+            },
+            {
+                "from": "gpt",
+                "value": null
+            }
+        ]
+    },
+    {
+        "image": "/mnt/lustre/huangsiyuan/A3VLM/model/accessory/demo_data/pot.png",
+        "conversations": [
+            {
+                "from": "human",
+                "value": "Detect all manipulable object parts and provide their 3D bounding boxes."
+            },
+            {
+                "from": "gpt",
+                "value": null
+            }
+        ]
+    },
+    {
+        "image": "/mnt/lustre/huangsiyuan/A3VLM/model/accessory/demo_data/plier.png",
+        "conversations": [
+            {
+                "from": "human",
+                "value": "Detect all manipulable object parts and provide their 3D bounding boxes."
+            },
+            {
+                "from": "gpt",
+                "value": null
+            }
+        ]
+    }    
+]
